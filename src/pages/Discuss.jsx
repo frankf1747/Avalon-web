@@ -36,33 +36,34 @@ export default function Discuss({ room, me }) {
     <Shell title={`第 ${room.game.currentQuest + 1} 局 · 发言环节`}>
       <div className="text-center mb-3">
         <div className="text-xs text-inkMuted tracking-[0.3em]">从队长开始依次发言</div>
-        <div className="font-display text-xl text-goldBright tracking-[0.3em] mt-1">{currentSpeaker?.name || '...'}</div>
         <div className="text-xs text-inkMuted tracking-widest mt-1">
           队长：{leader?.name} · 还剩 {remaining} 人
         </div>
       </div>
       <Flourish className="my-4" />
 
-      <div className="flex-1 flex flex-col items-center justify-center gap-5">
+      <div className="flex-1 flex flex-col items-center justify-center gap-4">
         <RoundTable
           players={players}
           leaderIdx={room.game.currentLeaderIndex}
           currentSpeakerIdx={speakerIndex}
           nominatedUids={[]}
           phase={room.phase}
-          size={320}
+          size={280}
           centerTitle={currentSpeaker?.name || '...'}
-          centerSubtitle={`队长 ${leader?.name || '...'} · 已发言 ${Math.min(discussionCount + 1, players.length)} / ${players.length}${playMode === 'online' ? ' · 线上同步中' : ''}`}
+          centerSubtitle={`队长 ${leader?.name || '...'}${playMode === 'online' ? ' · 线上' : ''}`}
         />
 
         <div className="grid w-full grid-cols-2 gap-3">
           <div className="card-themed !p-4 text-center">
             <div className="text-[11px] tracking-[0.3em] text-inkMuted">当前发言</div>
-            <div className="mt-2 font-display text-xl text-goldBright tracking-[0.2em]">{currentSpeaker?.name || '...'}</div>
+            <div className="mt-2 font-display text-xl text-goldBright tracking-[0.12em]">{currentSpeaker?.name || '...'}</div>
           </div>
           <div className="card-themed !p-4 text-center">
-            <div className="text-[11px] tracking-[0.3em] text-inkMuted">剩余人数</div>
-            <div className="mt-2 font-display text-xl text-goldBright tracking-[0.2em]">{remaining}</div>
+            <div className="text-[11px] tracking-[0.3em] text-inkMuted">发言进度</div>
+            <div className="mt-2 font-display text-xl text-goldBright tracking-[0.12em]">
+              {Math.min(discussionCount + 1, players.length)} / {players.length}
+            </div>
           </div>
         </div>
       </div>
