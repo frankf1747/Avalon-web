@@ -80,6 +80,63 @@ function getNightPrompt(stepKey, secret, visiblePlayers) {
   return null
 }
 
+function NightInfoCard({ role, prompt, step, visiblePlayers, remaining }) {
+  return (
+    <div className="w-full max-w-sm card-themed !p-0 overflow-hidden text-left">
+      <div className="border-b border-gold/20 bg-black/20 px-5 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-14 w-14 overflow-hidden rounded-md border border-gold/25 bg-black/30">
+              {role?.image ? (
+                <img src={role.image} alt={role.name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-goldBright">⚜</div>
+              )}
+            </div>
+            <div>
+              <div className="text-[11px] tracking-[0.3em] text-gold/70">你的身份</div>
+              <div className="mt-2 font-display text-2xl tracking-[0.12em] text-goldBright">
+                {role?.name || '未知'}
+              </div>
+              <div className={`mt-1 text-[11px] tracking-[0.26em] ${role?.side === 'evil' ? 'text-evilRed' : 'text-goodGreen'}`}>
+                {role?.side === 'evil' ? '邪恶阵营' : '正义阵营'}
+              </div>
+            </div>
+          </div>
+          {step.countdown > 0 && (
+            <div className="rounded-full border border-gold/25 px-3 py-1 font-mono text-xl text-goldBright">
+              {remaining}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="px-5 py-4">
+        <div className="text-[11px] tracking-[0.3em] text-gold/70">
+          {prompt?.listTitle || '当前状态'}
+        </div>
+        {prompt && step.key.endsWith('_open') ? (
+          visiblePlayers.length > 0 ? (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {visiblePlayers.map((player) => (
+                <PlayerBadge key={player.name} name={player.name} tone={prompt.tone} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-3 rounded-md border border-gold/20 bg-black/15 px-4 py-4 text-sm leading-7 tracking-[0.1em] text-inkMuted">
+              当前没有额外可见玩家。
+            </div>
+          )
+        ) : (
+          <div className="mt-3 rounded-md border border-gold/20 bg-black/15 px-4 py-4 text-sm leading-7 tracking-[0.1em] text-inkMuted">
+            {step.key === 'all_open' ? '所有人即将返回讨论阶段。' : '当前阶段无需额外查看信息，请等待下一步。'}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Night({ room, me, secret }) {
   const isHost = me?.uid === room.hostUid
   const script = useMemo(
@@ -143,58 +200,7 @@ export default function Night({ room, me, secret }) {
               {prompt ? prompt.detail : <>请闭上双眼，跟随司仪引导。<br />游戏开始时本页将自动跳转。</>}
             </div>
           </div>
-          <div className="w-full max-w-sm card-themed !p-0 overflow-hidden text-left">
-            <div className="border-b border-gold/20 bg-black/20 px-5 py-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-14 w-14 overflow-hidden rounded-md border border-gold/25 bg-black/30">
-                    {role?.image ? (
-                      <img src={role.image} alt={role.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-goldBright">⚜</div>
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-[11px] tracking-[0.3em] text-gold/70">你的身份</div>
-                    <div className="mt-2 font-display text-2xl tracking-[0.12em] text-goldBright">
-                      {role?.name || '未知'}
-                    </div>
-                    <div className={`mt-1 text-[11px] tracking-[0.26em] ${role?.side === 'evil' ? 'text-evilRed' : 'text-goodGreen'}`}>
-                      {role?.side === 'evil' ? '邪恶阵营' : '正义阵营'}
-                    </div>
-                  </div>
-                </div>
-                {step.countdown > 0 && (
-                  <div className="rounded-full border border-gold/25 px-3 py-1 font-mono text-xl text-goldBright">
-                    {remaining}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="px-5 py-4">
-              <div className="text-[11px] tracking-[0.3em] text-gold/70">
-                {prompt?.listTitle || '当前状态'}
-              </div>
-              {prompt && step.key.endsWith('_open') ? (
-                visiblePlayers.length > 0 ? (
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    {visiblePlayers.map((player) => (
-                      <PlayerBadge key={player.name} name={player.name} tone={prompt.tone} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mt-3 rounded-md border border-gold/20 bg-black/15 px-4 py-4 text-sm leading-7 tracking-[0.1em] text-inkMuted">
-                    当前没有额外可见玩家。
-                  </div>
-                )
-              ) : (
-                <div className="mt-3 rounded-md border border-gold/20 bg-black/15 px-4 py-4 text-sm leading-7 tracking-[0.1em] text-inkMuted">
-                  {step.key === 'all_open' ? '所有人即将返回讨论阶段。' : '当前阶段无需额外查看信息，请等待下一步。'}
-                </div>
-              )}
-            </div>
-          </div>
+          <NightInfoCard role={role} prompt={prompt} step={step} visiblePlayers={visiblePlayers} remaining={remaining} />
         </div>
       </Shell>
     )
@@ -230,6 +236,9 @@ export default function Night({ room, me, secret }) {
             </div>
           )}
         </div>
+        {prompt && (
+          <NightInfoCard role={role} prompt={prompt} step={step} visiblePlayers={visiblePlayers} remaining={remaining} />
+        )}
       </div>
       <button className="btn-primary w-full" onClick={next}>
         {idx >= script.length - 1 ? '· 迎来黎明 ·' : '· 下一步 ·'}
