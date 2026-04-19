@@ -1,9 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { QUEST_PLAYER_COUNT } from '../constants/questConfig'
 import { submitNomination } from '../utils/roomApi'
 import { PlayerPicker } from '../components/game/PlayerPicker'
 import { QuestTracker } from '../components/game/QuestTracker'
 import { Shell, Flourish } from '../components/ui/Layout'
+
+function shuffle(arr) {
+  const next = arr.slice()
+  for (let i = next.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[next[i], next[j]] = [next[j], next[i]]
+  }
+  return next
+}
 
 export default function Nominate({ room, me }) {
   const players = useMemo(
@@ -15,6 +24,15 @@ export default function Nominate({ room, me }) {
   const qi = room.game.currentQuest
   const need = (QUEST_PLAYER_COUNT[players.length] || QUEST_PLAYER_COUNT[5])[qi]
   const [selected, setSelected] = useState(room.game.nominatedTeam || [])
+  const botSubmittedRef = useRef(false)
+
+  useEffect(() => {
+    setSelected(room.game.nominatedTeam || [])
+  }, [room.game.nominatedTeam])
+
+  useEffect(() => {
+    botSubmittedRef.current = false
+  }, [room.phase, room.game.currentLeaderIndex, room.game.currentQuest])
 
   function toggle(uid) {
     setSelected(s => s.includes(uid) ? s.filter(x => x !== uid) : [...s, uid])
@@ -23,6 +41,27 @@ export default function Nominate({ room, me }) {
     if (selected.length !== need) return
     await submitNomination(room.id, selected)
   }
+
+  useEffect(() => {
+    if (me?.uid !== room.hostUid) return
+    if (!leader?.isBot) return
+    if (room.phase !== 'nominate') return
+    if (botSubmittedRef.current) return
+
+    botSubmittedRef.current = true
+    const team = (room.game.nominatedTeam && room.game.nominatedTeam.length === need)
+      ? room.game.nominatedTeam
+      : [leader.uid, ...shuffle(players.filter(p => p.uid !== leader.uid)).slice(0, need - 1).map(p => p.uid)]
+
+    const timer = setTimeout(() => {
+      submitNomination(room.id, team).catch((e) => {
+        console.warn('nominate fallback error', e)
+        botSubmittedRef.current = false
+      })
+    }, 700)
+
+    return () => clearTimeout(timer)
+  }, [leader, me?.uid, need, players, room.game.currentLeaderIndex, room.game.currentQuest, room.game.nominatedTeam, room.hostUid, room.id, room.phase])
 
   return (
     <Shell title={`第 ${qi + 1} 局 · 队长提名`}>
