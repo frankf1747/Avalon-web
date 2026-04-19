@@ -14,7 +14,7 @@ import { QUEST_PLAYER_COUNT } from '../constants/questConfig'
 import { nextLeaderIndex } from '../utils/gameLogic'
 import {
   submitNomination, castApprovalVote, castMissionVote, advanceDiscussion,
-  submitLady, closeLady, submitAssassin,
+  submitLady, closeLady, submitAssassin, setDraftNomination,
 } from '../utils/roomApi'
 
 const DELAY_MS = 600 // small pause so UI transitions are visible
@@ -49,6 +49,11 @@ export function useBotDriver(room) {
     const quest = room.quests?.[qi] || {}
     const assignment = room.assignment || {}
     const sideOf = (uid) => ROLES[assignment[uid]]?.side
+    const buildBotTeam = (leaderUid) => {
+      const need = (QUEST_PLAYER_COUNT[players.length] || QUEST_PLAYER_COUNT[5])[qi]
+      const pool = shuffle(players.filter(p => p.uid !== leaderUid))
+      return [leaderUid, ...pool.slice(0, need - 1).map(p => p.uid)]
+    }
 
     async function step() {
       running.current = true
@@ -58,6 +63,14 @@ export function useBotDriver(room) {
           let remainingSpeakers = players.length - (room.game.discussionCount || 0)
 
           while (remainingSpeakers > 0 && players[speakerIndex]?.isBot) {
+            const speaker = players[speakerIndex]
+            if (speakerIndex === room.game.currentLeaderIndex) {
+              const draft = room.game.nominatedTeam || []
+              if (draft.length === 0) {
+                await sleep(DELAY_MS)
+                await setDraftNomination(room.id, buildBotTeam(speaker.uid))
+              }
+            }
             await sleep(DELAY_MS)
             await advanceDiscussion(room.id)
             remainingSpeakers -= 1
@@ -66,9 +79,9 @@ export function useBotDriver(room) {
         } else if (room.phase === 'nominate') {
           const leader = players[room.game.currentLeaderIndex]
           if (leader?.isBot) {
-            const need = (QUEST_PLAYER_COUNT[players.length] || QUEST_PLAYER_COUNT[5])[qi]
-            const pool = shuffle(players.filter(p => p.uid !== leader.uid))
-            const team = [leader.uid, ...pool.slice(0, need - 1).map(p => p.uid)]
+            const team = (room.game.nominatedTeam && room.game.nominatedTeam.length > 0)
+              ? room.game.nominatedTeam
+              : buildBotTeam(leader.uid)
             await sleep(DELAY_MS)
             await submitNomination(room.id, team)
           }

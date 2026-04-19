@@ -10,6 +10,7 @@ export default function RoundTable({
   showLeaderLabel = true,
   showSpeakerLabel = true,
   showNominatedLabel = true,
+  onSeatClick,
 }) {
   const radius = size * 0.38
   const center = size / 2
@@ -47,11 +48,21 @@ export default function RoundTable({
         return (
           <div
             key={p.uid}
-            className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: x, top: y }}
+            className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
+            style={{ left: x, top: y, width: 92 }}
           >
             <div
+              role={onSeatClick ? 'button' : undefined}
+              tabIndex={onSeatClick ? 0 : undefined}
+              onClick={onSeatClick ? () => onSeatClick(p.uid) : undefined}
+              onKeyDown={onSeatClick ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onSeatClick(p.uid)
+                }
+              } : undefined}
               className={`relative flex h-16 w-16 items-center justify-center rounded-full border text-sm font-display shadow-card transition
+                ${onSeatClick ? 'cursor-pointer active:scale-[0.98]' : ''}
                 ${isSpeaker ? 'border-sky-300 bg-sky-300/15 text-sky-100' :
                   isLeader ? 'border-goldBright bg-goldBright/20 text-goldBright' :
                   isNominated ? 'border-goodGreen bg-goodGreen/15 text-ink' :
@@ -63,7 +74,7 @@ export default function RoundTable({
               {isSpeaker && showSpeakerLabel && <span className="absolute -bottom-5 text-[11px] tracking-widest text-sky-300">发言</span>}
               {!isSpeaker && isNominated && showNominatedLabel && <span className="absolute -bottom-5 text-[11px] tracking-widest text-goodGreen">出征</span>}
             </div>
-            <div className="mt-5 w-20 text-center text-[11px] tracking-[0.08em] text-inkMuted leading-4">
+            <div className="mt-5 w-full text-center text-[11px] tracking-[0.08em] text-inkMuted leading-4">
               {p.name}
             </div>
           </div>

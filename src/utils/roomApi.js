@@ -254,6 +254,12 @@ export async function setNightStep(roomId, stepIndex) {
   })
 }
 
+export async function setDraftNomination(roomId, teamUids) {
+  await updateDoc(doc(db, ROOMS, roomId), {
+    'game.nominatedTeam': teamUids,
+  })
+}
+
 export async function advanceToDiscuss(roomId) {
   const snap = await getDoc(doc(db, ROOMS, roomId))
   const room = snap.data()
@@ -275,7 +281,6 @@ export async function advanceDiscussion(roomId) {
       phase: 'nominate',
       'game.currentSpeakerIndex': null,
       'game.discussionCount': playerCount,
-      'game.nominatedTeam': [],
     })
     return
   }

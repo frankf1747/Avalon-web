@@ -14,7 +14,7 @@ export default function Nominate({ room, me }) {
   const isLeader = leader?.uid === me?.uid
   const qi = room.game.currentQuest
   const need = (QUEST_PLAYER_COUNT[players.length] || QUEST_PLAYER_COUNT[5])[qi]
-  const [selected, setSelected] = useState([])
+  const [selected, setSelected] = useState(room.game.nominatedTeam || [])
 
   function toggle(uid) {
     setSelected(s => s.includes(uid) ? s.filter(x => x !== uid) : [...s, uid])
