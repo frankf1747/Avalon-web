@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { advanceDiscussion } from '../utils/roomApi'
 import { Shell, Flourish } from '../components/ui/Layout'
+import RoundTable from '../components/game/RoundTable'
 
 export default function Discuss({ room, me }) {
   const [busy, setBusy] = useState(false)
@@ -16,6 +17,7 @@ export default function Discuss({ room, me }) {
   const leader = players[room.game.currentLeaderIndex]
   const discussionCount = room.game.discussionCount || 0
   const remaining = Math.max(players.length - discussionCount - 1, 0)
+  const playMode = room.config.playMode || 'local'
 
   async function next() {
     if (!isSpeaker || busy) return
@@ -41,27 +43,28 @@ export default function Discuss({ room, me }) {
       </div>
       <Flourish className="my-4" />
 
-      <div className="flex-1 flex flex-col gap-3">
-        {players.map((p, i) => {
-          const isCurrent = i === speakerIndex
-          const isLeader = i === room.game.currentLeaderIndex
-          const hasSpoken = i !== speakerIndex && ((i - room.game.currentLeaderIndex + players.length) % players.length) < discussionCount
-          return (
-            <div
-              key={p.uid}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border
-                ${isCurrent ? 'border-goldBright bg-goldBright/15' :
-                  hasSpoken ? 'border-goodGreen/40 bg-goodGreen/10' :
-                  'border-gold/20 bg-black/20'}`}
-            >
-              <div className="w-8 h-8 rounded-full bg-gold/40 text-night flex items-center justify-center font-display">{p.name.slice(0, 1)}</div>
-              <div className="flex-1 text-sm">{p.name}</div>
-              {isLeader && <span className="text-[11px] text-goldBright">👑 队长</span>}
-              {isCurrent && <span className="text-[11px] text-goldBright">正在发言</span>}
-              {!isCurrent && hasSpoken && <span className="text-[11px] text-goodGreen">已发言</span>}
-            </div>
-          )
-        })}
+      <div className="flex-1 flex flex-col items-center justify-center gap-5">
+        <RoundTable
+          players={players}
+          leaderIdx={room.game.currentLeaderIndex}
+          currentSpeakerIdx={speakerIndex}
+          nominatedUids={[]}
+          phase={room.phase}
+          size={320}
+          centerTitle={currentSpeaker?.name || '...'}
+          centerSubtitle={`队长 ${leader?.name || '...'} · 已发言 ${Math.min(discussionCount + 1, players.length)} / ${players.length}${playMode === 'online' ? ' · 线上同步中' : ''}`}
+        />
+
+        <div className="grid w-full grid-cols-2 gap-3">
+          <div className="card-themed !p-4 text-center">
+            <div className="text-[11px] tracking-[0.3em] text-inkMuted">当前发言</div>
+            <div className="mt-2 font-display text-xl text-goldBright tracking-[0.2em]">{currentSpeaker?.name || '...'}</div>
+          </div>
+          <div className="card-themed !p-4 text-center">
+            <div className="text-[11px] tracking-[0.3em] text-inkMuted">剩余人数</div>
+            <div className="mt-2 font-display text-xl text-goldBright tracking-[0.2em]">{remaining}</div>
+          </div>
+        </div>
       </div>
 
       {isSpeaker ? (

@@ -33,6 +33,7 @@ export default function Lobby({ room, me, onLeave }) {
   }
   function useSuggested() { if (isHost && setup) setRoles(setup.suggested.slice()) }
   function toggleLady(v) { if (isHost) updateRoomConfig(room.id, { 'config.useLadyOfLake': v }) }
+  function setPlayMode(playMode) { if (isHost) updateRoomConfig(room.id, { 'config.playMode': playMode }) }
 
   async function handleLeave() { await leaveRoom(room.id); onLeave() }
   async function handleStart() { try { await startGame(room.id) } catch (e) { alert(e.message) } }
@@ -137,6 +138,35 @@ export default function Lobby({ room, me, onLeave }) {
           className={`w-12 h-7 rounded-full border border-gold/50 relative transition disabled:opacity-30 ${room.config.useLadyOfLake ? 'bg-gold/30' : 'bg-black/30'}`}>
           <div className={`w-5 h-5 bg-goldBright rounded-full absolute top-0.5 transition ${room.config.useLadyOfLake ? 'left-6' : 'left-0.5'}`} />
         </button>
+      </div>
+
+      <div className="mt-4 card-themed">
+        <div className="text-sm">游玩方式</div>
+        <div className="text-[11px] text-inkMuted mt-1">线上模式会提供更多个人提示，并自动播放任务结果揭示</div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button
+            disabled={!isHost}
+            onClick={() => setPlayMode('local')}
+            className={`rounded-sm border px-3 py-3 text-sm tracking-[0.2em] transition disabled:opacity-30 ${
+              (room.config.playMode || 'local') === 'local'
+                ? 'border-goldBright bg-goldBright/15 text-goldBright'
+                : 'border-gold/25 bg-black/20 text-inkMuted'
+            }`}
+          >
+            线下同屏
+          </button>
+          <button
+            disabled={!isHost}
+            onClick={() => setPlayMode('online')}
+            className={`rounded-sm border px-3 py-3 text-sm tracking-[0.2em] transition disabled:opacity-30 ${
+              room.config.playMode === 'online'
+                ? 'border-sky-300 bg-sky-300/12 text-sky-200'
+                : 'border-gold/25 bg-black/20 text-inkMuted'
+            }`}
+          >
+            线上游玩
+          </button>
+        </div>
       </div>
 
       <div className="mt-auto pt-6">

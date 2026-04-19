@@ -35,6 +35,7 @@ function discussionStartState(leaderIndex) {
     'game.nominatedTeam': [],
     'game.currentSpeakerIndex': leaderIndex,
     'game.discussionCount': 0,
+    'game.nightStepIndex': 0,
   }
 }
 
@@ -66,13 +67,13 @@ export async function createRoom(hostName) {
     hostUid: uid,
     phase: 'lobby',
     players: { [uid]: player },
-    config: { roles: suggested, useLadyOfLake: false },
+    config: { roles: suggested, useLadyOfLake: false, playMode: 'local' },
     game: {
       currentQuest: 0, currentLeaderIndex: 0, rejectedCount: 0, roundId: 0,
       ladyHolderUid: null, usedLadyUids: [],
       nominatedTeam: [], winner: null, assassinTarget: null,
       ladyTarget: null, ladyResult: null,
-      currentSpeakerIndex: 0, discussionCount: 0,
+      currentSpeakerIndex: 0, discussionCount: 0, nightStepIndex: 0,
     },
     quests: initQuests(5),
     createdAt: serverTimestamp(),
@@ -225,6 +226,7 @@ export async function startGame(roomId) {
     'game.rejectedCount': 0,
     'game.ladyHolderUid': ladyHolder,
     'game.usedLadyUids': [],
+    'game.nightStepIndex': 0,
     'game.currentSpeakerIndex': startingLeaderIndex,
     'game.discussionCount': 0,
   })
@@ -240,7 +242,16 @@ export async function setPlayerReady(roomId, ready = true) {
 
 // When all players ready, host can trigger this to advance to night
 export async function advanceToNight(roomId) {
-  await updateDoc(doc(db, ROOMS, roomId), { phase: 'night' })
+  await updateDoc(doc(db, ROOMS, roomId), {
+    phase: 'night',
+    'game.nightStepIndex': 0,
+  })
+}
+
+export async function setNightStep(roomId, stepIndex) {
+  await updateDoc(doc(db, ROOMS, roomId), {
+    'game.nightStepIndex': stepIndex,
+  })
 }
 
 export async function advanceToDiscuss(roomId) {
@@ -583,7 +594,7 @@ export async function resetToLobby(roomId) {
       currentQuest: 0, currentLeaderIndex: 0, rejectedCount: 0, roundId: (room.game?.roundId || 0),
       ladyHolderUid: null, usedLadyUids: [], nominatedTeam: [],
       winner: null, assassinTarget: null, ladyTarget: null, ladyResult: null,
-      currentSpeakerIndex: 0, discussionCount: 0,
+      currentSpeakerIndex: 0, discussionCount: 0, nightStepIndex: 0,
     },
     quests: initQuests(Object.keys(room.players).length),
   })

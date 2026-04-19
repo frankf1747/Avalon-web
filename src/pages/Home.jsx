@@ -43,8 +43,10 @@ export default function Home() {
     <Shell>
       <div className="flex-1 flex flex-col items-center justify-center text-center gap-8 pb-16">
         <div>
-          <div className="text-5xl font-display text-goldBright tracking-[0.35em] drop-shadow-[0_0_20px_rgba(245,217,122,0.4)]">
-            阿瓦隆
+          <div className="flex justify-center">
+            <div className="pl-[0.35em] text-5xl font-display text-goldBright tracking-[0.35em] drop-shadow-[0_0_20px_rgba(245,217,122,0.4)]">
+              阿瓦隆
+            </div>
           </div>
           <div className="text-gold/70 tracking-[0.6em] text-xs mt-3">A V A L O N</div>
           <Flourish className="mt-6 w-56" />

@@ -65,7 +65,7 @@ export default function Room() {
   switch (room.phase) {
     case 'lobby':        page = <Lobby key={phaseKey} room={room} me={me} onLeave={onLeave} />; break
     case 'roleReveal':   page = <RoleReveal key={phaseKey} room={room} me={me} secret={secret} />; break
-    case 'night':        page = <Night key={phaseKey} room={room} me={me} />; break
+    case 'night':        page = <Night key={phaseKey} room={room} me={me} secret={secret} />; break
     case 'discuss':      page = <Discuss key={phaseKey} room={room} me={me} />; break
     case 'nominate':     page = <Nominate key={phaseKey} room={room} me={me} />; break
     case 'vote':

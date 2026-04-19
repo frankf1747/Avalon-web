@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import { castMissionVote, advanceResultPhaseFromRoom } from '../utils/roomApi'
 import { Shell, Flourish } from '../components/ui/Layout'
 import { ROLES } from '../constants/roles'
@@ -10,6 +11,7 @@ export default function Mission({ room, me, secret }) {
   const [advancing, setAdvancing] = useState(false)
   const [advanceError, setAdvanceError] = useState('')
   const [voteError, setVoteError] = useState('')
+  const [autoSeconds, setAutoSeconds] = useState(4)
   const qi = room.game.currentQuest
   const quest = room.quests[qi]
   const team = quest.team
@@ -24,6 +26,8 @@ export default function Mission({ room, me, secret }) {
   const failThreshold = failsRequired(Object.keys(room.players).length, qi)
   const missionPassed = failCount < failThreshold
   const isHost = me?.uid === room.hostUid
+  const isOnlineMode = room.config.playMode === 'online'
+  const autoAdvanceStarted = useRef(false)
 
   const players = useMemo(
     () => Object.entries(room.players).map(([uid, p]) => ({ uid, ...p })).sort((a, b) => a.order - b.order),
@@ -54,6 +58,26 @@ export default function Mission({ room, me, secret }) {
     }
   }
 
+  useEffect(() => {
+    autoAdvanceStarted.current = false
+    setAutoSeconds(4)
+  }, [room.phase, room.game.currentQuest])
+
+  useEffect(() => {
+    if (!isOnlineMode || !isResultPhase || !isHost || advancing || autoAdvanceStarted.current) return
+    autoAdvanceStarted.current = true
+    const timeout = setTimeout(() => {
+      continueNext()
+    }, 4000)
+    return () => clearTimeout(timeout)
+  }, [advancing, isHost, isOnlineMode, isResultPhase])
+
+  useEffect(() => {
+    if (!isOnlineMode || !isResultPhase || autoSeconds <= 0) return
+    const timer = setTimeout(() => setAutoSeconds(v => v - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [autoSeconds, isOnlineMode, isResultPhase])
+
   return (
     <Shell title={`第 ${qi + 1} 局 · 任务执行`}>
       <div className="text-center mb-3">
@@ -67,20 +91,57 @@ export default function Mission({ room, me, secret }) {
       <Flourish />
 
       <div className="flex-1 flex flex-col items-center justify-center gap-6">
+        {isOnlineMode && (
+          <div className="grid w-full max-w-md grid-cols-3 gap-3">
+            <div className="card-themed !p-3 text-center">
+              <div className="text-[10px] tracking-[0.3em] text-inkMuted">任务</div>
+              <div className="mt-2 font-display text-xl text-goldBright">{qi + 1}</div>
+            </div>
+            <div className="card-themed !p-3 text-center">
+              <div className="text-[10px] tracking-[0.3em] text-inkMuted">已提交</div>
+              <div className="mt-2 font-display text-xl text-goldBright">{submitted} / {team.length}</div>
+            </div>
+            <div className="card-themed !p-3 text-center">
+              <div className="text-[10px] tracking-[0.3em] text-inkMuted">失败阈值</div>
+              <div className="mt-2 font-display text-xl text-goldBright">{failThreshold}</div>
+            </div>
+          </div>
+        )}
+
         {isResultPhase ? (
           <>
-            <div className="text-center">
-              <div className={`font-display text-2xl tracking-[0.3em] ${missionPassed ? 'text-goodGreen' : 'text-evilRed'}`}>
+            <motion.div
+              className="text-center"
+              initial={{ opacity: 0, y: 12, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+            >
+              <div className={`font-display text-3xl tracking-[0.35em] ${missionPassed ? 'text-goodGreen' : 'text-evilRed'}`}>
                 {missionPassed ? '任务成功' : '任务失败'}
               </div>
               <div className="text-[11px] text-inkMuted tracking-widest mt-2">
                 {failThreshold === 2 ? '本局为双失败任务，需要 2 张失败牌才会失败' : '本局为普通任务，1 张失败牌即可失败'}
               </div>
-            </div>
+            </motion.div>
             <div className="w-full max-w-md space-y-5">
               <ResultCardSpread image="/mission_success.png" label="成功牌" count={successCount} />
               <ResultCardSpread image="/mission_fail.png" label="失败牌" count={failCount} />
             </div>
+            {isOnlineMode && (
+              <motion.div
+                className="w-full max-w-md rounded-lg border border-gold/25 bg-black/25 px-4 py-3 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.45, duration: 0.35 }}
+              >
+                <div className="text-[11px] tracking-[0.3em] text-gold/75">线上揭示</div>
+                <div className="mt-2 text-sm tracking-[0.2em] text-inkMuted">
+                  {isHost
+                    ? `结果展示后将自动继续${autoSeconds > 0 ? ` · ${autoSeconds}s` : ''}`
+                    : '等待房主在结果展示后自动继续'}
+                </div>
+              </motion.div>
+            )}
           </>
         ) : onTeam ? (
           !myVote ? (
@@ -125,13 +186,13 @@ export default function Mission({ room, me, secret }) {
       </div>
       {isResultPhase && (
         <>
-          {isHost ? (
+          {!isOnlineMode && (isHost ? (
             <button className="btn-primary w-full mt-4" disabled={advancing} onClick={continueNext}>
               {advancing ? '推进中…' : '· 继续 ·'}
             </button>
           ) : (
             <div className="text-center text-[11px] text-inkMuted tracking-widest mt-4">等待房主继续…</div>
-          )}
+          ))}
           {advanceError && <div className="text-center text-sm text-evilRed mt-3">{advanceError}</div>}
         </>
       )}

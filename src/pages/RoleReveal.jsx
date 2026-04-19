@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ROLES } from '../constants/roles'
 import { setPlayerReady, advanceToNight } from '../utils/roomApi'
 import { Shell, Flourish } from '../components/ui/Layout'
+import AlphaFitImage from '../components/game/AlphaFitImage'
 
 export default function RoleReveal({ room, me, secret }) {
   const [flipped, setFlipped] = useState(false)
@@ -25,7 +26,7 @@ export default function RoleReveal({ room, me, secret }) {
       <div className="flex-1 flex flex-col items-center justify-center gap-5">
         <div className="[perspective:1200px]">
           <motion.div
-            className="relative w-[min(84vw,320px)] h-[min(calc(84vw*1.5),500px)] [transform-style:preserve-3d]"
+            className="relative w-[min(90vw,360px)] h-[min(calc(90vw*1.5),560px)] [transform-style:preserve-3d]"
             animate={{ rotateY: flipped ? 180 : 0 }}
             transition={{ duration: 0.8 }}
           >
@@ -46,12 +47,16 @@ export default function RoleReveal({ room, me, secret }) {
             <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-lg border border-gold/60 shadow-card overflow-hidden
                             bg-[linear-gradient(180deg,#1a1530,#07060f)] flex flex-col">
               <div className="flex-1 relative overflow-hidden">
-                <img src={role.image} alt={role.name}
-                     className="w-full h-full object-contain"
-                     onError={(e) => { e.target.style.display = 'none' }} />
+                <div className="absolute inset-x-[6%] top-[4%] bottom-[2%] overflow-hidden">
+                  <AlphaFitImage
+                    src={role.image}
+                    alt={role.name}
+                    className="h-full w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]"
+                  />
+                </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               </div>
-              <div className="p-4 border-t border-gold/30">
+              <div className="p-4 border-t border-gold/30 bg-black/25 backdrop-blur-[1px]">
                 <div className="flex items-center gap-2">
                   <div className="text-goldBright font-display text-2xl tracking-[0.3em]">{role.name}</div>
                   <span className={`chip ${role.side === 'evil' ? 'border-evilRed text-evilRed' : 'border-goodGreen text-goodGreen'}`}>
