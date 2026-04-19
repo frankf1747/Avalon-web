@@ -11,6 +11,7 @@ import { useEffect, useRef } from 'react'
 import { auth } from '../firebase'
 import { ROLES } from '../constants/roles'
 import { QUEST_PLAYER_COUNT } from '../constants/questConfig'
+import { nextLeaderIndex } from '../utils/gameLogic'
 import {
   submitNomination, castApprovalVote, castMissionVote, advanceDiscussion,
   submitLady, closeLady, submitAssassin,
@@ -19,6 +20,7 @@ import {
 const DELAY_MS = 600 // small pause so UI transitions are visible
 
 function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)] }
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)) }
 
 export function useBotDriver(room) {
   const running = useRef(false)
@@ -44,17 +46,21 @@ export function useBotDriver(room) {
       running.current = true
       try {
         if (room.phase === 'discuss') {
-          const speaker = players[room.game.currentSpeakerIndex ?? room.game.currentLeaderIndex]
-          if (speaker?.isBot) {
-            await new Promise(r => setTimeout(r, DELAY_MS))
+          let speakerIndex = room.game.currentSpeakerIndex ?? room.game.currentLeaderIndex
+          let remainingSpeakers = players.length - (room.game.discussionCount || 0)
+
+          while (remainingSpeakers > 0 && players[speakerIndex]?.isBot) {
+            await sleep(DELAY_MS)
             await advanceDiscussion(room.id)
+            remainingSpeakers -= 1
+            speakerIndex = nextLeaderIndex(speakerIndex, players.length)
           }
         } else if (room.phase === 'nominate') {
           const leader = players[room.game.currentLeaderIndex]
           if (leader?.isBot) {
             const need = (QUEST_PLAYER_COUNT[players.length] || QUEST_PLAYER_COUNT[5])[qi]
             const team = [leader.uid, ...players.filter(p => p.uid !== leader.uid).slice(0, need - 1).map(p => p.uid)]
-            await new Promise(r => setTimeout(r, DELAY_MS))
+            await sleep(DELAY_MS)
             await submitNomination(room.id, team)
           }
         } else if (room.phase === 'vote') {
@@ -63,7 +69,7 @@ export function useBotDriver(room) {
           for (const b of pendingBots) {
             const side = sideOf(b.uid)
             const vote = side === 'evil' && Math.random() < 0.3 ? 'reject' : 'approve'
-            await new Promise(r => setTimeout(r, DELAY_MS))
+            await sleep(DELAY_MS)
             await castApprovalVote(room.id, vote, b.uid)
           }
         } else if (room.phase === 'mission') {
@@ -72,7 +78,7 @@ export function useBotDriver(room) {
           for (const b of teamBots) {
             const side = sideOf(b.uid)
             const vote = side === 'evil' ? 'fail' : 'success'
-            await new Promise(r => setTimeout(r, DELAY_MS))
+            await sleep(DELAY_MS)
             await castMissionVote(room.id, vote, b.uid)
           }
         } else if (room.phase === 'lady') {
@@ -82,9 +88,9 @@ export function useBotDriver(room) {
             const used = new Set(room.game.usedLadyUids || [])
             const eligible = players.filter(p => p.uid !== holder && !used.has(p.uid))
             if (eligible.length) {
-              await new Promise(r => setTimeout(r, DELAY_MS))
+              await sleep(DELAY_MS)
               await submitLady(room.id, pickRandom(eligible).uid, holder)
-              await new Promise(r => setTimeout(r, DELAY_MS))
+              await sleep(DELAY_MS)
               await closeLady(room.id)
             }
           }
@@ -94,7 +100,7 @@ export function useBotDriver(room) {
           if (assassinIsBot) {
             const goodOnes = players.filter(p => sideOf(p.uid) === 'good')
             if (goodOnes.length) {
-              await new Promise(r => setTimeout(r, DELAY_MS))
+              await sleep(DELAY_MS)
               await submitAssassin(room.id, pickRandom(goodOnes).uid)
             }
           }

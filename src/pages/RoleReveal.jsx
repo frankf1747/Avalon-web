@@ -25,16 +25,18 @@ export default function RoleReveal({ room, me, secret }) {
       <div className="flex-1 flex flex-col items-center justify-center gap-5">
         <div className="[perspective:1200px]">
           <motion.div
-            className="relative w-[280px] h-[420px] [transform-style:preserve-3d]"
+            className="relative w-[min(84vw,320px)] h-[min(calc(84vw*1.5),500px)] [transform-style:preserve-3d]"
             animate={{ rotateY: flipped ? 180 : 0 }}
             transition={{ duration: 0.8 }}
           >
             {/* Card back */}
             <div className="absolute inset-0 [backface-visibility:hidden] rounded-lg border border-gold/60 shadow-card flex items-center justify-center
                             bg-[radial-gradient(ellipse_at_50%_30%,rgba(201,168,76,0.25),transparent_70%),linear-gradient(160deg,#1f1a2e,#07060f)]">
-              <div className="text-center">
+              <div className="flex h-full w-full flex-col items-center justify-center px-8 text-center">
                 <div className="text-6xl text-goldBright drop-shadow-[0_0_20px_rgba(245,217,122,0.5)]">⚜</div>
-                <div className="text-goldBright font-display text-2xl tracking-[0.5em] mt-6">阿瓦隆</div>
+                <div className="mt-6 flex w-full justify-center">
+                  <div className="pl-[0.5em] text-goldBright font-display text-2xl tracking-[0.5em]">阿瓦隆</div>
+                </div>
                 <div className="text-gold/70 text-[10px] tracking-[0.6em] mt-2">A V A L O N</div>
                 <Flourish className="mt-6 w-40 mx-auto" />
               </div>
