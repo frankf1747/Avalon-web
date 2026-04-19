@@ -50,7 +50,10 @@ function getNightPrompt(stepKey, secret, visiblePlayers) {
 
 export default function Night({ room, me, secret }) {
   const isHost = me?.uid === room.hostUid
-  const script = useMemo(() => buildNightSteps(room.config.roles), [room.config.roles])
+  const script = useMemo(
+    () => buildNightSteps(room.config.roles, room.config.playMode || 'local'),
+    [room.config.playMode, room.config.roles]
+  )
   const idx = Math.min(room.game?.nightStepIndex ?? 0, script.length - 1)
   const step = script[idx]
   const visiblePlayers = useMemo(
