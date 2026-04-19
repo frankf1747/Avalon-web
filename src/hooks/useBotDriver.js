@@ -21,6 +21,14 @@ const DELAY_MS = 600 // small pause so UI transitions are visible
 
 function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)] }
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)) }
+function shuffle(arr) {
+  const next = arr.slice()
+  for (let i = next.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[next[i], next[j]] = [next[j], next[i]]
+  }
+  return next
+}
 
 export function useBotDriver(room) {
   const running = useRef(false)
@@ -59,7 +67,8 @@ export function useBotDriver(room) {
           const leader = players[room.game.currentLeaderIndex]
           if (leader?.isBot) {
             const need = (QUEST_PLAYER_COUNT[players.length] || QUEST_PLAYER_COUNT[5])[qi]
-            const team = [leader.uid, ...players.filter(p => p.uid !== leader.uid).slice(0, need - 1).map(p => p.uid)]
+            const pool = shuffle(players.filter(p => p.uid !== leader.uid))
+            const team = [leader.uid, ...pool.slice(0, need - 1).map(p => p.uid)]
             await sleep(DELAY_MS)
             await submitNomination(room.id, team)
           }

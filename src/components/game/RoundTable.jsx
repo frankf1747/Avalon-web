@@ -7,8 +7,11 @@ export default function RoundTable({
   centerTitle = '圆桌',
   centerSubtitle = '',
   size = 300,
+  showLeaderLabel = true,
+  showSpeakerLabel = true,
+  showNominatedLabel = true,
 }) {
-  const radius = size * 0.34
+  const radius = size * 0.38
   const center = size / 2
   const nominated = new Set(nominatedUids)
   const activePhases = ['discuss', 'nominate', 'vote', 'voteResult']
@@ -17,11 +20,11 @@ export default function RoundTable({
     <div className="relative mx-auto w-fit" style={{ width: size, height: size }}>
       <div
         className="absolute rounded-full border border-gold/25 bg-[radial-gradient(circle,rgba(201,168,76,0.1),transparent_70%)]"
-        style={{ inset: size * 0.18 }}
+        style={{ inset: size * 0.16 }}
       />
       <div
         className="absolute rounded-full border border-gold/20 flex items-center justify-center"
-        style={{ inset: size * 0.33 }}
+        style={{ inset: size * 0.29 }}
       >
         <div className="px-4 text-center">
           <div className="font-display text-goldBright tracking-[0.28em]" style={{ fontSize: size * 0.065 }}>
@@ -48,19 +51,19 @@ export default function RoundTable({
             style={{ left: x, top: y }}
           >
             <div
-              className={`relative flex h-14 w-14 items-center justify-center rounded-full border text-sm font-display shadow-card transition
+              className={`relative flex h-16 w-16 items-center justify-center rounded-full border text-sm font-display shadow-card transition
                 ${isSpeaker ? 'border-sky-300 bg-sky-300/15 text-sky-100' :
                   isLeader ? 'border-goldBright bg-goldBright/20 text-goldBright' :
                   isNominated ? 'border-goodGreen bg-goodGreen/15 text-ink' :
                   'border-gold/25 bg-black/35 text-ink'}`}
             >
               <div className="absolute inset-1 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.08),transparent_70%)]" />
-              <span className="relative z-10 text-base">{p.name.slice(0, 1)}</span>
-              {isLeader && <span className="absolute -top-5 text-[11px] tracking-widest text-goldBright">队长</span>}
-              {isSpeaker && <span className="absolute -bottom-5 text-[11px] tracking-widest text-sky-300">发言</span>}
-              {!isSpeaker && isNominated && <span className="absolute -bottom-5 text-[11px] tracking-widest text-goodGreen">出征</span>}
+              <span className="relative z-10 text-lg">{p.name.slice(0, 1)}</span>
+              {isLeader && showLeaderLabel && <span className="absolute -top-5 text-[11px] tracking-widest text-goldBright">队长</span>}
+              {isSpeaker && showSpeakerLabel && <span className="absolute -bottom-5 text-[11px] tracking-widest text-sky-300">发言</span>}
+              {!isSpeaker && isNominated && showNominatedLabel && <span className="absolute -bottom-5 text-[11px] tracking-widest text-goodGreen">出征</span>}
             </div>
-            <div className="mt-6 w-16 text-center text-[10px] tracking-[0.12em] text-inkMuted truncate">
+            <div className="mt-5 w-20 text-center text-[11px] tracking-[0.08em] text-inkMuted leading-4">
               {p.name}
             </div>
           </div>

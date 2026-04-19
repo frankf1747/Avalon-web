@@ -2,10 +2,12 @@ import { useMemo, useState } from 'react'
 import { advanceDiscussion } from '../utils/roomApi'
 import { Shell, Flourish } from '../components/ui/Layout'
 import RoundTable from '../components/game/RoundTable'
+import { useEvents } from '../hooks/useEvents'
 
 export default function Discuss({ room, me }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const events = useEvents(room.id, 6)
   const players = useMemo(
     () => Object.entries(room.players).map(([uid, p]) => ({ uid, ...p })).sort((a, b) => a.order - b.order),
     [room.players]
@@ -14,10 +16,8 @@ export default function Discuss({ room, me }) {
   const speakerIndex = room.game.currentSpeakerIndex ?? room.game.currentLeaderIndex
   const currentSpeaker = players[speakerIndex]
   const isSpeaker = currentSpeaker?.uid === me?.uid
-  const leader = players[room.game.currentLeaderIndex]
   const discussionCount = room.game.discussionCount || 0
   const remaining = Math.max(players.length - discussionCount - 1, 0)
-  const playMode = room.config.playMode || 'local'
 
   async function next() {
     if (!isSpeaker || busy) return
@@ -37,7 +37,7 @@ export default function Discuss({ room, me }) {
       <div className="text-center mb-3">
         <div className="text-xs text-inkMuted tracking-[0.3em]">从队长开始依次发言</div>
         <div className="text-xs text-inkMuted tracking-widest mt-1">
-          队长：{leader?.name} · 还剩 {remaining} 人
+          还剩 {remaining} 人发言
         </div>
       </div>
       <Flourish className="my-4" />
@@ -49,21 +49,30 @@ export default function Discuss({ room, me }) {
           currentSpeakerIdx={speakerIndex}
           nominatedUids={[]}
           phase={room.phase}
-          size={280}
+          size={320}
           centerTitle={currentSpeaker?.name || '...'}
-          centerSubtitle={`队长 ${leader?.name || '...'}${playMode === 'online' ? ' · 线上' : ''}`}
+          centerSubtitle=""
+          showLeaderLabel={false}
         />
 
-        <div className="grid w-full grid-cols-2 gap-3">
-          <div className="card-themed !p-4 text-center">
-            <div className="text-[11px] tracking-[0.3em] text-inkMuted">当前发言</div>
-            <div className="mt-2 font-display text-xl text-goldBright tracking-[0.12em]">{currentSpeaker?.name || '...'}</div>
-          </div>
-          <div className="card-themed !p-4 text-center">
-            <div className="text-[11px] tracking-[0.3em] text-inkMuted">发言进度</div>
-            <div className="mt-2 font-display text-xl text-goldBright tracking-[0.12em]">
-              {Math.min(discussionCount + 1, players.length)} / {players.length}
+        <div className="w-full card-themed !p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[11px] tracking-[0.3em] text-gold/80">Game Log</div>
+            <div className="text-[11px] tracking-[0.24em] text-inkMuted">
+              发言 {Math.min(discussionCount + 1, players.length)} / {players.length}
             </div>
+          </div>
+          <div className="mt-3 space-y-2">
+            {events.map((event) => (
+              <div key={event.id} className="rounded-sm border border-gold/15 bg-black/15 px-3 py-2.5 text-sm text-ink/85">
+                {event.message}
+              </div>
+            ))}
+            {events.length === 0 && (
+              <div className="rounded-sm border border-gold/15 bg-black/15 px-3 py-2.5 text-sm text-inkMuted">
+                等待日志更新…
+              </div>
+            )}
           </div>
         </div>
       </div>
