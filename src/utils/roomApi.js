@@ -73,7 +73,7 @@ export async function createRoom(hostName) {
       ladyHolderUid: null, usedLadyUids: [],
       nominatedTeam: [], winner: null, assassinTarget: null,
       ladyTarget: null, ladyResult: null,
-      currentSpeakerIndex: 0, discussionCount: 0, nightStepIndex: 0,
+      currentSpeakerIndex: 0, discussionCount: 0, nightStepIndex: 0, endRevealOpen: false,
     },
     quests: initQuests(5),
     createdAt: serverTimestamp(),
@@ -227,6 +227,7 @@ export async function startGame(roomId) {
     'game.ladyHolderUid': ladyHolder,
     'game.usedLadyUids': [],
     'game.nightStepIndex': 0,
+    'game.endRevealOpen': false,
     'game.currentSpeakerIndex': startingLeaderIndex,
     'game.discussionCount': 0,
   })
@@ -257,6 +258,12 @@ export async function setNightStep(roomId, stepIndex) {
 export async function setDraftNomination(roomId, teamUids) {
   await updateDoc(doc(db, ROOMS, roomId), {
     'game.nominatedTeam': teamUids,
+  })
+}
+
+export async function setEndRevealOpen(roomId, open = true) {
+  await updateDoc(doc(db, ROOMS, roomId), {
+    'game.endRevealOpen': open,
   })
 }
 
@@ -599,7 +606,7 @@ export async function resetToLobby(roomId) {
       currentQuest: 0, currentLeaderIndex: 0, rejectedCount: 0, roundId: (room.game?.roundId || 0),
       ladyHolderUid: null, usedLadyUids: [], nominatedTeam: [],
       winner: null, assassinTarget: null, ladyTarget: null, ladyResult: null,
-      currentSpeakerIndex: 0, discussionCount: 0, nightStepIndex: 0,
+      currentSpeakerIndex: 0, discussionCount: 0, nightStepIndex: 0, endRevealOpen: false,
     },
     quests: initQuests(Object.keys(room.players).length),
   })
