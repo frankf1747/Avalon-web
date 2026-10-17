@@ -1,5 +1,5 @@
 // Audio narration: prefer local mp3 (drop-in at public/audio/<key>.mp3);
-// fall back to browser Web Speech API (zh-CN) when the file is missing.
+// fall back to browser Web Speech API (zh-CN or en-US) when the file is missing.
 
 const fileCache = new Map() // url -> 'ok' | 'missing'
 
@@ -13,29 +13,30 @@ async function fileExists(url) {
   } catch { fileCache.set(url, 'missing'); return false }
 }
 
-function speakTTS(text) {
+function speakTTS(text, lang = 'zh') {
   if (!('speechSynthesis' in window)) return
   try {
     speechSynthesis.cancel()
     const u = new SpeechSynthesisUtterance(text)
-    u.lang = 'zh-CN'; u.rate = 0.85; u.pitch = 0.9; u.volume = 1
+    u.lang = lang === 'zh' ? 'zh-CN' : 'en-US'; u.rate = 0.85; u.pitch = 0.9; u.volume = 1
+    const prefix = lang === 'zh' ? 'zh' : 'en'
     const voices = speechSynthesis.getVoices()
-    const zh = voices.find(v => v.lang?.toLowerCase().startsWith('zh'))
-    if (zh) u.voice = zh
+    const voice = voices.find(v => v.lang?.toLowerCase().startsWith(prefix))
+    if (voice) u.voice = voice
     speechSynthesis.speak(u)
   } catch {}
 }
 
 let current = null
-export async function narrate({ audio, text }) {
+export async function narrate({ audio, text, lang }) {
   stopNarration()
   if (audio && await fileExists(audio)) {
     const el = new Audio(audio)
     current = el
-    el.play().catch(() => speakTTS(text))
+    el.play().catch(() => speakTTS(text, lang))
     return
   }
-  speakTTS(text)
+  speakTTS(text, lang)
 }
 
 export function stopNarration() {

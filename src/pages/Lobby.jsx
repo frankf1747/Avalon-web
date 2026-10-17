@@ -2,10 +2,12 @@ import { useMemo } from 'react'
 import { ROLES, ROLE_ORDER, STANDARD_SETUPS } from '../constants/roles'
 import { updateRoomConfig, leaveRoom, startGame, addDebugBot, removePlayer } from '../utils/roomApi'
 import { Shell, Flourish } from '../components/ui/Layout'
+import { useT } from '../i18n'
 
 const STACKABLE = new Set(['loyal', 'minion'])
 
 export default function Lobby({ room, me, onLeave }) {
+  const t = useT()
   const isHost = me?.uid === room.hostUid
   const players = useMemo(
     () => Object.entries(room.players).map(([uid, p]) => ({ uid, ...p })).sort((a, b) => a.order - b.order),
@@ -36,21 +38,21 @@ export default function Lobby({ room, me, onLeave }) {
   function setPlayMode(playMode) { if (isHost) updateRoomConfig(room.id, { 'config.playMode': playMode }) }
 
   async function handleLeave() { await leaveRoom(room.id); onLeave() }
-  async function handleStart() { try { await startGame(room.id) } catch (e) { alert(e.message) } }
+  async function handleStart() { try { await startGame(room.id) } catch (e) { alert(t.err(e)) } }
 
   return (
-    <Shell title="圆桌大厅" back={handleLeave}>
+    <Shell title={t('lobby.title')} back={handleLeave}>
       <div className="text-center mb-5">
-        <div className="text-inkMuted text-xs tracking-[0.4em]">房间号</div>
+        <div className="text-inkMuted text-xs tracking-[0.4em]">{t('lobby.roomCode')}</div>
         <div className="text-goldBright font-mono text-4xl tracking-[0.4em] mt-1 font-semibold">{room.id}</div>
       </div>
 
       <Flourish />
       <div className="mt-4 mb-2 flex items-center justify-between">
-        <span className="text-xs tracking-[0.3em] text-gold/80">玩家 ({count}/10)</span>
+        <span className="text-xs tracking-[0.3em] text-gold/80">{t('lobby.players', { n: count })}</span>
         {isHost && (
           <button className="text-xs text-goldBright tracking-widest underline decoration-gold/40 disabled:opacity-30"
-                  disabled={count >= 10} onClick={() => addDebugBot(room.id)}>+ 添加 bot（调试）</button>
+                  disabled={count >= 10} onClick={() => addDebugBot(room.id)}>{t('lobby.addBot')}</button>
         )}
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -64,7 +66,7 @@ export default function Lobby({ room, me, onLeave }) {
                 {p.name}
                 {p.isBot && <span className="text-[9px] text-inkMuted tracking-widest">BOT</span>}
               </div>
-              {p.isHost && <div className="text-[10px] text-goldBright tracking-widest">主持</div>}
+              {p.isHost && <div className="text-[10px] text-goldBright tracking-widest">{t('lobby.host')}</div>}
             </div>
             {isHost && p.uid !== me.uid && (
               <button onClick={() => removePlayer(room.id, p.uid)}
@@ -76,18 +78,18 @@ export default function Lobby({ room, me, onLeave }) {
 
       <Flourish className="mt-6" />
       <div className="mt-4 mb-2 flex items-center justify-between">
-        <span className="text-xs tracking-[0.3em] text-gold/80">角色配置</span>
+        <span className="text-xs tracking-[0.3em] text-gold/80">{t('lobby.roles')}</span>
         {isHost && setup && (
-          <button className="text-xs text-goldBright tracking-widest underline decoration-gold/40" onClick={useSuggested}>使用推荐</button>
+          <button className="text-xs text-goldBright tracking-widest underline decoration-gold/40" onClick={useSuggested}>{t('lobby.useSuggested')}</button>
         )}
       </div>
       <div className="text-[11px] tracking-widest mb-3">
         {setup ? (
           <span className={sideMatch && totalMatch ? 'text-goodGreen' : 'text-evilRed'}>
-            建议 好{setup.good} / 坏{setup.evil} · 当前 好{goodN} / 坏{evilN} · {selected.length}/{count}
+            {t('lobby.setupStatus', { sg: setup.good, se: setup.evil, g: goodN, e: evilN, sel: selected.length, count })}
           </span>
         ) : (
-          <span className="text-evilRed">人数不足（需 5–10）</span>
+          <span className="text-evilRed">{t('lobby.notEnough')}</span>
         )}
       </div>
 
@@ -102,8 +104,8 @@ export default function Lobby({ room, me, onLeave }) {
               ${n > 0 ? (evil ? 'border-evilRed/70 bg-evilRed/10' : 'border-goodGreen/70 bg-goodGreen/10') : 'border-gold/20 bg-black/20'}`}>
               <div className={`w-1.5 h-8 rounded ${evil ? 'bg-evilRed' : 'bg-goodGreen'}`} />
               <div className="flex-1 min-w-0">
-                <div className="text-sm">{role.name}</div>
-                <div className="text-[10px] text-inkMuted truncate">{role.description}</div>
+                <div className="text-sm">{t(`role.${rid}`)}</div>
+                <div className="text-[10px] text-inkMuted truncate">{t(`role.${rid}.desc`)}</div>
               </div>
               {stackable ? (
                 <div className="flex items-center gap-2">
@@ -129,8 +131,8 @@ export default function Lobby({ room, me, onLeave }) {
 
       <div className="mt-5 card-themed flex items-center justify-between">
         <div>
-          <div className="text-sm">湖中女神</div>
-          <div className="text-[11px] text-inkMuted">建议 7+ 人启用</div>
+          <div className="text-sm">{t('lobby.lady')}</div>
+          <div className="text-[11px] text-inkMuted">{t('lobby.ladyHint')}</div>
         </div>
         <button
           onClick={() => toggleLady(!room.config.useLadyOfLake)}
@@ -141,8 +143,8 @@ export default function Lobby({ room, me, onLeave }) {
       </div>
 
       <div className="mt-4 card-themed">
-        <div className="text-sm">游玩方式</div>
-        <div className="text-[11px] text-inkMuted mt-1">线上模式会提供更多个人提示，并自动播放任务结果揭示</div>
+        <div className="text-sm">{t('lobby.playMode')}</div>
+        <div className="text-[11px] text-inkMuted mt-1">{t('lobby.playModeHint')}</div>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             disabled={!isHost}
@@ -153,7 +155,7 @@ export default function Lobby({ room, me, onLeave }) {
                 : 'border-gold/25 bg-black/20 text-inkMuted'
             }`}
           >
-            线下同屏
+            {t('lobby.local')}
           </button>
           <button
             disabled={!isHost}
@@ -164,16 +166,16 @@ export default function Lobby({ room, me, onLeave }) {
                 : 'border-gold/25 bg-black/20 text-inkMuted'
             }`}
           >
-            线上游玩
+            {t('lobby.online')}
           </button>
         </div>
       </div>
 
       <div className="mt-auto pt-6">
         {isHost ? (
-          <button className="btn-primary w-full" onClick={handleStart} disabled={!canStart}>· 开始游戏 ·</button>
+          <button className="btn-primary w-full" onClick={handleStart} disabled={!canStart}>{t('lobby.start')}</button>
         ) : (
-          <div className="text-center text-inkMuted text-xs tracking-[0.3em]">等待房主开始…</div>
+          <div className="text-center text-inkMuted text-xs tracking-[0.3em]">{t('lobby.waitHost')}</div>
         )}
       </div>
     </Shell>

@@ -5,12 +5,21 @@ import { db, auth } from '../firebase'
 import { STANDARD_SETUPS } from '../constants/roles'
 import { initQuests, nextLeaderIndex, tallyApproval, resolveMission, checkWinner } from './gameLogic'
 import { buildSecrets } from './assignRoles'
+import { getLang } from '../i18n'
+import { BOT_NAMES } from '../i18n/strings'
 
 const ROOMS = 'rooms'
 const SECRETS = 'secrets'
 
 function safeLogEvent(roomId, type, message, data = {}) {
   void logEvent(roomId, type, message, data)
+}
+
+// message is an i18n key (see src/i18n/strings.js); the UI translates it via t.err().
+function appError(key, params) {
+  const e = new Error(key)
+  if (params) e.params = params
+  return e
 }
 
 function normalizeQuests(quests) {
@@ -78,7 +87,7 @@ export async function createRoom(hostName) {
     quests: initQuests(5),
     createdAt: serverTimestamp(),
   })
-  safeLogEvent(roomId, 'roomCreated', `${hostName} 创建了房间 ${roomId}`)
+  safeLogEvent(roomId, 'roomCreated', `${hostName} 创建了房间 ${roomId}`, { i18n: 'ev.roomCreated', name: hostName, roomId })
   return roomId
 }
 
@@ -86,12 +95,12 @@ export async function joinRoom(roomId, name) {
   const uid = auth.currentUser.uid
   const ref = doc(db, ROOMS, roomId)
   const snap = await getDoc(ref)
-  if (!snap.exists()) throw new Error('房间不存在')
+  if (!snap.exists()) throw appError('err.roomNotFound')
   const room = snap.data()
-  if (room.phase !== 'lobby' && !room.players[uid]) throw new Error('游戏已开始')
+  if (room.phase !== 'lobby' && !room.players[uid]) throw appError('err.gameStarted')
   if (room.players[uid]) return
   const count = Object.keys(room.players).length
-  if (count >= 10) throw new Error('房间已满')
+  if (count >= 10) throw appError('err.roomFull')
   const newPlayer = { name, isHost: false, isReady: false, order: count, joinedAt: Date.now() }
   const suggested = STANDARD_SETUPS[count + 1]?.suggested?.slice() || room.config.roles
   await updateDoc(ref, {
@@ -99,7 +108,7 @@ export async function joinRoom(roomId, name) {
     'config.roles': suggested,
     quests: initQuests(count + 1),
   })
-  safeLogEvent(roomId, 'playerJoined', `${name} 加入了房间`)
+  safeLogEvent(roomId, 'playerJoined', `${name} 加入了房间`, { i18n: 'ev.playerJoined', name })
 }
 
 export async function leaveRoom(roomId) {
@@ -138,13 +147,21 @@ export async function reapIfStale(roomId, room) {
 }
 
 async function destroyRoom(roomId, playerUids = []) {
+  // Room + events first. Secrets go in a separate pass afterwards: the rules only
+  // allow deleting a secret once its room is gone, and a secrets failure must not
+  // block the room teardown.
   try {
     const batch = writeBatch(db)
     await clearRoomEvents(roomId, batch)
-    playerUids.forEach(uid => batch.delete(doc(db, SECRETS, `${roomId}_${uid}`)))
     batch.delete(doc(db, ROOMS, roomId))
     await batch.commit()
-  } catch (e) { console.warn('destroyRoom partial failure', e) }
+  } catch (e) { console.warn('destroyRoom failed', e); return }
+  if (!playerUids.length) return
+  try {
+    const batch = writeBatch(db)
+    playerUids.forEach(uid => batch.delete(doc(db, SECRETS, `${roomId}_${uid}`)))
+    await batch.commit()
+  } catch (e) { console.warn('destroyRoom: secrets cleanup skipped', e) }
 }
 
 async function clearRoomEvents(roomId, batchMaybe) {
@@ -158,8 +175,6 @@ export async function updateRoomConfig(roomId, partial) {
   await updateDoc(doc(db, ROOMS, roomId), partial)
 }
 
-const BOT_NAMES = ['亚瑟','兰斯洛特','盖文','崔斯坦','加拉哈德','帕西法尔','凯伊','贝迪维尔','伊万']
-
 export async function addDebugBot(roomId) {
   const ref = doc(db, ROOMS, roomId)
   const snap = await getDoc(ref); if (!snap.exists()) return
@@ -167,7 +182,8 @@ export async function addDebugBot(roomId) {
   const count = Object.keys(room.players).length
   if (count >= 10) return
   const used = new Set(Object.values(room.players).map(p => p.name))
-  const name = BOT_NAMES.find(n => !used.has(n)) || `骑士${count + 1}`
+  const lang = getLang()
+  const name = BOT_NAMES[lang].find(n => !used.has(n)) || (lang === 'zh' ? `骑士${count + 1}` : `Knight ${count + 1}`)
   const botUid = `bot-${Math.random().toString(36).slice(2, 8)}`
   const newPlayer = { name, isHost: false, isReady: false, isBot: true, order: count, joinedAt: Date.now() }
   const suggested = STANDARD_SETUPS[count + 1]?.suggested?.slice() || room.config.roles
@@ -193,13 +209,13 @@ export async function removePlayer(roomId, uid) {
 
 export async function startGame(roomId) {
   const ref = doc(db, ROOMS, roomId)
-  const snap = await getDoc(ref); if (!snap.exists()) throw new Error('房间不存在')
+  const snap = await getDoc(ref); if (!snap.exists()) throw appError('err.roomNotFound')
   const room = snap.data()
   const lobbyPlayers = Object.entries(room.players)
     .map(([uid, p]) => ({ uid, ...p }))
     .sort((a, b) => a.order - b.order)
-  if (lobbyPlayers.length < 5) throw new Error('至少需要 5 人')
-  if (lobbyPlayers.length !== room.config.roles.length) throw new Error('角色数与玩家数不符')
+  if (lobbyPlayers.length < 5) throw appError('err.min5')
+  if (lobbyPlayers.length !== room.config.roles.length) throw appError('err.roleMismatch')
 
   const players = shuffle(lobbyPlayers).map((player, index) => ({ ...player, order: index }))
   const startingLeaderIndex = Math.floor(Math.random() * players.length)
@@ -233,7 +249,7 @@ export async function startGame(roomId) {
   })
   batch.update(ref, playerUpdates)
   await batch.commit()
-  safeLogEvent(roomId, 'gameStart', '游戏开始')
+  safeLogEvent(roomId, 'gameStart', '游戏开始', { i18n: 'ev.gameStart' })
 }
 
 export async function setPlayerReady(roomId, ready = true) {
@@ -313,7 +329,7 @@ export async function submitNomination(roomId, teamUids) {
     phase: 'vote',
     quests,
   })
-  safeLogEvent(roomId, 'nomination', `队长提名了 ${teamUids.length} 位出征`)
+  safeLogEvent(roomId, 'nomination', `队长提名了 ${teamUids.length} 位出征`, { i18n: 'ev.nomination', n: teamUids.length })
 }
 
 export async function castApprovalVote(roomId, vote /* 'approve' | 'reject' */, asUid) {
@@ -329,7 +345,8 @@ export async function castApprovalVote(roomId, vote /* 'approve' | 'reject' */, 
   const update = { quests: nextQuests }
   if (Object.keys(votes).length >= playerCount) {
     const { approve, reject, passed } = tallyApproval(votes)
-    safeLogEvent(roomId, 'voteResult', `投票：${approve} 赞成 / ${reject} 反对 → ${passed ? '通过' : '拒绝'}`)
+    safeLogEvent(roomId, 'voteResult', `投票：${approve} 赞成 / ${reject} 反对 → ${passed ? '通过' : '拒绝'}`,
+      { i18n: passed ? 'ev.voteResult.pass' : 'ev.voteResult.reject', approve, reject })
     update.phase = 'voteResult'
   }
   await updateDoc(doc(db, ROOMS, roomId), update)
@@ -341,7 +358,7 @@ export async function castMissionVote(roomId, vote /* 'success' | 'fail' */, asU
   const room = snap.data()
   const qi = room.game.currentQuest
   const quests = normalizeQuests(room.quests)
-  if (!quests[qi]?.team?.includes(uid)) throw new Error('你不在队伍中')
+  if (!quests[qi]?.team?.includes(uid)) throw appError('err.notOnTeam')
   const votes = { ...(quests[qi]?.missionVotes || {}), [uid]: vote }
   const update = {
     quests: withQuestUpdate({ ...room, quests }, qi, (quest) => ({ ...quest, missionVotes: votes })),
@@ -356,7 +373,8 @@ export async function castMissionVote(roomId, vote /* 'success' | 'fail' */, asU
       result: success ? 'success' : 'fail',
       fails,
     }))
-    safeLogEvent(roomId, 'missionResult', `第${qi + 1}局任务：${success ? '成功' : '失败'}（${fails} 票失败）`)
+    safeLogEvent(roomId, 'missionResult', `第${qi + 1}局任务：${success ? '成功' : '失败'}（${fails} 票失败）`,
+      { i18n: success ? 'ev.missionResult.success' : 'ev.missionResult.fail', q: qi + 1, fails })
     update.phase = 'missionResult'
   }
   await updateDoc(doc(db, ROOMS, roomId), update)
@@ -388,7 +406,7 @@ export async function finalizeApprovalResult(roomId) {
     if (rejectedCount >= 5) {
       update.phase = 'end'
       update['game.winner'] = 'evil'
-      safeLogEvent(roomId, 'gameOver', '连续 5 次拒绝，坏人胜')
+      safeLogEvent(roomId, 'gameOver', '连续 5 次拒绝，坏人胜', { i18n: 'ev.gameOver' })
     } else {
       const nextLeader = nextLeaderIndex(room.game.currentLeaderIndex, playerCount)
       update['game.currentLeaderIndex'] = nextLeader
@@ -458,7 +476,7 @@ function approvalResultUpdateFromRoom(room) {
     if (rejectedCount >= 5) {
       update.phase = 'end'
       update['game.winner'] = 'evil'
-      safeLogEvent(room.id || room.code || '', 'gameOver', '连续 5 次拒绝，坏人胜')
+      safeLogEvent(room.id || room.code || '', 'gameOver', '连续 5 次拒绝，坏人胜', { i18n: 'ev.gameOver' })
     } else {
       const nextLeader = nextLeaderIndex(room.game.currentLeaderIndex, playerCount)
       update['game.currentLeaderIndex'] = nextLeader
@@ -475,7 +493,7 @@ function missionResultUpdateFromRoom(room) {
   const playerCount = Object.keys(room.players).length
   const quest = room.quests?.[qi] || {}
   const result = quest.result
-  if (!result) throw new Error('当前任务结果缺失')
+  if (!result) throw appError('err.missingResult')
 
   const newQuests = room.quests.map((q, i) => i === qi ? { ...q, result } : q)
   const winner = checkWinner(newQuests, room.game.rejectedCount)
@@ -518,7 +536,7 @@ export async function advanceResultPhase(roomId) {
 }
 
 export async function advanceResultPhaseFromRoom(room) {
-  if (!room?.id) throw new Error('房间信息缺失')
+  if (!room?.id) throw appError('err.missingRoom')
   if (room.phase === 'voteResult') {
     await updateDoc(doc(db, ROOMS, room.id), approvalResultUpdateFromRoom(room))
     return
@@ -527,14 +545,14 @@ export async function advanceResultPhaseFromRoom(room) {
     await updateDoc(doc(db, ROOMS, room.id), missionResultUpdateFromRoom(room))
     return
   }
-  throw new Error(`当前阶段无法继续：${room.phase}`)
+  throw appError('err.cannotAdvance', { phase: room.phase })
 }
 
 export async function submitLady(roomId, targetUid, asUid) {
   const snap = await getDoc(doc(db, ROOMS, roomId))
   const room = snap.data()
   const uid = asUid || auth.currentUser.uid
-  if (room.game.ladyHolderUid !== uid) throw new Error('你不是湖中女神持有者')
+  if (room.game.ladyHolderUid !== uid) throw appError('err.notLadyHolder')
   const targetRoleSide = await sideForUid(roomId, targetUid, room)
   await updateDoc(doc(db, ROOMS, roomId), {
     'game.ladyTarget': targetUid,
@@ -542,7 +560,7 @@ export async function submitLady(roomId, targetUid, asUid) {
     'game.usedLadyUids': [...(room.game.usedLadyUids || []), uid],
     'game.ladyHolderUid': targetUid,
   })
-  safeLogEvent(roomId, 'ladyResult', `湖中女神查验了一位玩家`)
+  safeLogEvent(roomId, 'ladyResult', '湖中女神查验了一位玩家', { i18n: 'ev.ladyResult' })
 }
 
 export async function closeLady(roomId) {
@@ -574,21 +592,22 @@ export async function submitAssassin(roomId, targetUid) {
     'game.winner': success ? 'evil' : 'good',
     phase: 'end',
   })
-  safeLogEvent(roomId, 'assassin', success ? '刺客命中梅林，坏人逆转取胜' : '刺客猜错，好人胜利')
+  safeLogEvent(roomId, 'assassin', success ? '刺客命中梅林，坏人逆转取胜' : '刺客猜错，好人胜利',
+    { i18n: success ? 'ev.assassin.hit' : 'ev.assassin.miss' })
 }
 
 export async function triggerAssassination(roomId, asUid) {
   const uid = asUid || auth.currentUser.uid
   const snap = await getDoc(doc(db, ROOMS, roomId))
   const room = snap.data()
-  if (!room) throw new Error('房间不存在')
-  if (room.phase === 'end') throw new Error('游戏已结束')
-  if ((room.assignment || {})[uid] !== 'assassin') throw new Error('只有刺客可以发动刺杀')
+  if (!room) throw appError('err.roomNotFound')
+  if (room.phase === 'end') throw appError('err.gameOver')
+  if ((room.assignment || {})[uid] !== 'assassin') throw appError('err.onlyAssassin')
 
   await updateDoc(doc(db, ROOMS, roomId), {
     phase: 'assassin',
   })
-  safeLogEvent(roomId, 'assassinReady', '刺客决定提前发动刺杀')
+  safeLogEvent(roomId, 'assassinReady', '刺客决定提前发动刺杀', { i18n: 'ev.assassinReady' })
 }
 
 export async function resetToLobby(roomId) {

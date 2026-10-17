@@ -12,7 +12,10 @@ service cloud.firestore {
       allow read: if request.auth != null
                   && docId.split('_')[1] == request.auth.uid;
       allow create, update: if request.auth != null;
-      allow delete: if false;
+      // Deletable only after its room is gone (destroyRoom cleanup), so secrets
+      // can't be wiped mid-game.
+      allow delete: if request.auth != null
+                    && !exists(/databases/$(database)/documents/rooms/$(docId.split('_')[0]));
     }
   }
 }

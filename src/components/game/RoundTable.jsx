@@ -1,10 +1,12 @@
+import { useT } from '../../i18n'
+
 export default function RoundTable({
   players,
   leaderIdx,
   currentSpeakerIdx = null,
   nominatedUids = [],
   phase,
-  centerTitle = '圆桌',
+  centerTitle,
   centerSubtitle = '',
   size = 300,
   showLeaderLabel = true,
@@ -12,6 +14,7 @@ export default function RoundTable({
   showNominatedLabel = true,
   onSeatClick,
 }) {
+  const t = useT()
   const radius = size * 0.38
   const center = size / 2
   const nominated = new Set(nominatedUids)
@@ -29,7 +32,7 @@ export default function RoundTable({
       >
         <div className="px-4 text-center">
           <div className="font-display text-goldBright tracking-[0.28em]" style={{ fontSize: size * 0.065 }}>
-            {centerTitle}
+            {centerTitle ?? t('table.title')}
           </div>
           {!!centerSubtitle && (
             <div className="mt-2 text-[10px] text-inkMuted tracking-[0.25em] leading-relaxed">{centerSubtitle}</div>
@@ -70,9 +73,9 @@ export default function RoundTable({
             >
               <div className="absolute inset-1 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.08),transparent_70%)]" />
               <span className="relative z-10 text-lg">{p.name.slice(0, 1)}</span>
-              {isLeader && showLeaderLabel && <span className="absolute -top-5 text-[11px] tracking-widest text-goldBright">队长</span>}
-              {isSpeaker && showSpeakerLabel && <span className="absolute -bottom-5 text-[11px] tracking-widest text-sky-300">发言</span>}
-              {!isSpeaker && isNominated && showNominatedLabel && <span className="absolute -bottom-5 text-[11px] tracking-widest text-goodGreen">出征</span>}
+              {isLeader && showLeaderLabel && <span className="absolute -top-5 text-[11px] tracking-widest text-goldBright">{t('common.leader')}</span>}
+              {isSpeaker && showSpeakerLabel && <span className="absolute -bottom-5 text-[11px] tracking-widest text-sky-300">{t('common.speaking')}</span>}
+              {!isSpeaker && isNominated && showNominatedLabel && <span className="absolute -bottom-5 text-[11px] tracking-widest text-goodGreen">{t('common.onQuest')}</span>}
             </div>
             <div className="mt-5 w-full text-center text-[11px] tracking-[0.08em] text-inkMuted leading-4">
               {p.name}

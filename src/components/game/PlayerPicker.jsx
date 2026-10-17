@@ -1,4 +1,7 @@
+import { useT } from '../../i18n'
+
 export function PlayerPicker({ players, selected, onToggle, max, disabled }) {
+  const t = useT()
   return (
     <div className="flex flex-col gap-2">
       {players.map(p => {
@@ -15,7 +18,7 @@ export function PlayerPicker({ players, selected, onToggle, max, disabled }) {
               {p.name.slice(0, 1)}
             </div>
             <div className="flex-1 text-left text-sm">{p.name}</div>
-            {chosen && <span className="text-[11px] text-goldBright tracking-widest">✓ 出征</span>}
+            {chosen && <span className="text-[11px] text-goldBright tracking-widest">{t('picker.chosen')}</span>}
           </button>
         )
       })}

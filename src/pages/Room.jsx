@@ -15,10 +15,12 @@ import Mission from './Mission'
 import Lady from './Lady'
 import Assassin from './Assassin'
 import End from './End'
+import { useT } from '../i18n'
 
 export default function Room() {
   const { roomId } = useParams()
   const nav = useNavigate()
+  const t = useT()
   const user = useAuth()
   const { room, error } = useRoom(roomId)
   const secret = useSecret(roomId, user?.uid)
@@ -36,7 +38,7 @@ export default function Room() {
 
   if (!user || !room) {
     return <div className="min-h-screen flex items-center justify-center text-gold tracking-widest">
-      {error ? '房间不存在' : '进入圆桌…'}
+      {error ? t('room.notFound') : t('room.entering')}
     </div>
   }
 
@@ -44,12 +46,12 @@ export default function Room() {
   const inRoom = !!room.players[user.uid]
   if (!inRoom) {
     return <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center p-6">
-      <div className="text-gold tracking-widest">你不在此房间中</div>
-      <button className="btn-primary" onClick={() => nav('/')}>返回首页</button>
+      <div className="text-gold tracking-widest">{t('room.notIn')}</div>
+      <button className="btn-primary" onClick={() => nav('/play')}>{t('room.home')}</button>
     </div>
   }
 
-  const onLeave = () => nav('/')
+  const onLeave = () => nav('/play')
   const phaseKey = `${room.game.roundId || 0}-${room.phase}-${room.game.currentQuest}-${room.game.currentLeaderIndex}`
   const canTriggerAssassination = secret?.role === 'assassin' && ['night', 'discuss', 'nominate', 'vote', 'voteResult', 'mission', 'missionResult', 'lady'].includes(room.phase)
 
@@ -57,7 +59,7 @@ export default function Room() {
     try {
       await triggerAssassination(room.id)
     } catch (e) {
-      alert(e.message)
+      alert(t.err(e))
     }
   }
 
@@ -75,7 +77,7 @@ export default function Room() {
     case 'lady':         page = <Lady key={phaseKey} room={room} me={me} />; break
     case 'assassin':     page = <Assassin key={phaseKey} room={room} me={me} secret={secret} />; break
     case 'end':          page = <End key={phaseKey} room={room} me={me} onLeave={onLeave} />; break
-    default:             page = <div className="p-6 text-inkMuted">未知阶段：{room.phase}</div>
+    default:             page = <div className="p-6 text-inkMuted">{t('room.unknownPhase', { phase: room.phase })}</div>
   }
 
   return (
@@ -86,7 +88,7 @@ export default function Room() {
           className="fixed right-5 bottom-5 z-20 rounded-full border border-evilRed bg-evilRed/20 px-5 py-3 text-sm tracking-[0.25em] text-evilRed shadow-card"
           onClick={handleTriggerAssassination}
         >
-          · 发动刺杀 ·
+          {t('room.assassinate')}
         </button>
       )}
     </>

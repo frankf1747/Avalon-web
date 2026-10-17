@@ -20,7 +20,11 @@ npm run dev
 ### Assets you provide
 
 - `public/images/roles/{merlin,percival,loyal,mordred,morgana,assassin,oberon,minion}.png` — role portraits.
-- `public/audio/{all_close,evil_open,evil_close,merlin_open,merlin_close,percival_open,percival_close,all_open}.mp3` — optional narration files. Missing files automatically fall back to the browser's `speechSynthesis` (zh-CN).
+- `public/audio/{all_close,evil_open,evil_close,merlin_open,merlin_close,percival_open,percival_close,all_open}.mp3` — optional Chinese narration files. Missing files automatically fall back to the browser's `speechSynthesis` (zh-CN). In English mode, narration always uses `speechSynthesis` (en-US).
+
+### Language
+
+The UI defaults to English; the EN / 中文 toggle in the top-right corner switches languages (saved per device in `localStorage`). All strings live in `src/i18n/strings.js`.
 
 ## Flow
 

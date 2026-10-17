@@ -3,6 +3,13 @@
 @tailwind utilities;
 
 html, body, #root { min-height: 100%; }
+
+/* English: Latin display/body faces (CJK glyphs still fall back to the Chinese fonts),
+   and tighter letter-spacing, since the wide tracking is tuned for Chinese characters. */
+html[lang="en"] .font-serif { font-family: "EB Garamond", "Noto Serif SC", serif; }
+html[lang="en"] .font-display { font-family: "Cinzel", "Ma Shan Zheng", "Noto Serif SC", serif; }
+html[lang="en"] [class*="tracking-["] { letter-spacing: 0.06em; }
+html[lang="en"] .font-display[class*="tracking-["] { letter-spacing: 0.12em; }
 body {
   background:
     radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.18) 0%, transparent 50%),

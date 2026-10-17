@@ -6,8 +6,10 @@ import { ROLES } from '../constants/roles'
 import { failsRequired } from '../constants/questConfig'
 import VoteCard from '../components/game/VoteCard'
 import ResultCardSpread from '../components/game/ResultCardSpread'
+import { useT } from '../i18n'
 
 export default function Mission({ room, me, secret }) {
+  const t = useT()
   const [advancing, setAdvancing] = useState(false)
   const [advanceError, setAdvanceError] = useState('')
   const [voteError, setVoteError] = useState('')
@@ -41,7 +43,7 @@ export default function Mission({ room, me, secret }) {
     try {
       await castMissionVote(room.id, v)
     } catch (e) {
-      setVoteError(e.message || '投票失败')
+      setVoteError(t.err(e, 'common.voteFailed'))
     }
   }
 
@@ -52,7 +54,7 @@ export default function Mission({ room, me, secret }) {
     try {
       await advanceResultPhaseFromRoom(room)
     } catch (e) {
-      setAdvanceError(e.message || '继续失败')
+      setAdvanceError(t.err(e, 'common.continueFailed'))
     } finally {
       setAdvancing(false)
     }
@@ -79,9 +81,9 @@ export default function Mission({ room, me, secret }) {
   }, [autoSeconds, isOnlineMode, isResultPhase])
 
   return (
-    <Shell title={`第 ${qi + 1} 局 · 任务执行`}>
+    <Shell title={t('mission.title', { n: qi + 1 })}>
       <div className="text-center mb-3">
-        <div className="text-xs text-inkMuted tracking-[0.3em]">出征骑士</div>
+        <div className="text-xs text-inkMuted tracking-[0.3em]">{t('mission.knights')}</div>
         <div className="flex flex-wrap justify-center gap-2 mt-2">
           {team.map(uid => (
             <span key={uid} className="chip border-goldBright text-goldBright">{room.players[uid]?.name}</span>
@@ -94,15 +96,15 @@ export default function Mission({ room, me, secret }) {
         {isOnlineMode && (
           <div className="grid w-full max-w-md grid-cols-3 gap-3">
             <div className="card-themed !p-3 text-center">
-              <div className="text-[10px] tracking-[0.3em] text-inkMuted">任务</div>
+              <div className="text-[10px] tracking-[0.3em] text-inkMuted">{t('mission.quest')}</div>
               <div className="mt-2 font-display text-xl text-goldBright">{qi + 1}</div>
             </div>
             <div className="card-themed !p-3 text-center">
-              <div className="text-[10px] tracking-[0.3em] text-inkMuted">已提交</div>
+              <div className="text-[10px] tracking-[0.3em] text-inkMuted">{t('mission.submitted')}</div>
               <div className="mt-2 font-display text-xl text-goldBright">{submitted} / {team.length}</div>
             </div>
             <div className="card-themed !p-3 text-center">
-              <div className="text-[10px] tracking-[0.3em] text-inkMuted">失败阈值</div>
+              <div className="text-[10px] tracking-[0.3em] text-inkMuted">{t('mission.threshold')}</div>
               <div className="mt-2 font-display text-xl text-goldBright">{failThreshold}</div>
             </div>
           </div>
@@ -117,15 +119,15 @@ export default function Mission({ room, me, secret }) {
               transition={{ duration: 0.45, ease: 'easeOut' }}
             >
               <div className={`font-display text-3xl tracking-[0.35em] ${missionPassed ? 'text-goodGreen' : 'text-evilRed'}`}>
-                {missionPassed ? '任务成功' : '任务失败'}
+                {missionPassed ? t('mission.success') : t('mission.fail')}
               </div>
               <div className="text-[11px] text-inkMuted tracking-widest mt-2">
-                {failThreshold === 2 ? '本局为双失败任务，需要 2 张失败牌才会失败' : '本局为普通任务，1 张失败牌即可失败'}
+                {failThreshold === 2 ? t('mission.doubleRule') : t('mission.singleRule')}
               </div>
             </motion.div>
             <div className="w-full max-w-md space-y-5">
-              <ResultCardSpread image="/mission_success.png" label="成功牌" count={successCount} />
-              <ResultCardSpread image="/mission_fail.png" label="失败牌" count={failCount} />
+              <ResultCardSpread image="/mission_success.png" label={t('mission.successCards')} count={successCount} />
+              <ResultCardSpread image="/mission_fail.png" label={t('mission.failCards')} count={failCount} />
             </div>
             {isOnlineMode && (
               <motion.div
@@ -134,11 +136,11 @@ export default function Mission({ room, me, secret }) {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.45, duration: 0.35 }}
               >
-                <div className="text-[11px] tracking-[0.3em] text-gold/75">线上揭示</div>
+                <div className="text-[11px] tracking-[0.3em] text-gold/75">{t('mission.onlineReveal')}</div>
                 <div className="mt-2 text-sm tracking-[0.2em] text-inkMuted">
                   {isHost
-                    ? `结果展示后将自动继续${autoSeconds > 0 ? ` · ${autoSeconds}s` : ''}`
-                    : '等待房主在结果展示后自动继续'}
+                    ? `${t('mission.autoContinue')}${autoSeconds > 0 ? ` · ${autoSeconds}s` : ''}`
+                    : t('mission.waitAuto')}
                 </div>
               </motion.div>
             )}
@@ -146,40 +148,40 @@ export default function Mission({ room, me, secret }) {
         ) : onTeam ? (
           !myVote ? (
             <>
-              <div className="text-inkMuted text-xs tracking-[0.3em]">请投出你的密封</div>
+              <div className="text-inkMuted text-xs tracking-[0.3em]">{t('mission.castPrompt')}</div>
               <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
                 <VoteCard
                   image="/mission_success.png"
-                  label="成功"
-                  hint="推动任务完成"
+                  label={t('mission.successLabel')}
+                  hint={t('mission.successHint')}
                   accentClass="border-goodGreen/70"
                   onClick={() => vote('success')}
                 />
                 <VoteCard
                   image="/mission_fail.png"
-                  label="失败"
-                  hint={isEvil ? '暗中破坏任务' : '仅坏人可投'}
+                  label={t('mission.failLabel')}
+                  hint={isEvil ? t('mission.failHint') : t('mission.failHintGood')}
                   accentClass="border-evilRed/70"
                   disabled={!isEvil}
                   onClick={() => vote('fail')}
                 />
               </div>
-              {!isEvil && <div className="text-[11px] text-inkMuted tracking-widest">好人只能投成功</div>}
+              {!isEvil && <div className="text-[11px] text-inkMuted tracking-widest">{t('mission.goodOnly')}</div>}
               {failThreshold === 2 && (
                 <div className="text-[11px] text-goldBright tracking-widest text-center">
-                  本局需要 2 张失败牌才会判定任务失败
+                  {t('mission.doubleNote')}
                 </div>
               )}
             </>
           ) : (
             <div className="text-goldBright font-display text-xl tracking-[0.3em]">
-              你已投票 · 等待 {team.length - submitted} 人
+              {t('mission.voted', { n: team.length - submitted })}
             </div>
           )
         ) : (
           <div className="text-center">
-            <div className="font-display text-xl text-gold tracking-[0.3em] mb-2">骑士出征中</div>
-            <div className="text-inkMuted text-xs tracking-widest">请勿交流 · 等待结果</div>
+            <div className="font-display text-xl text-gold tracking-[0.3em] mb-2">{t('mission.underway')}</div>
+            <div className="text-inkMuted text-xs tracking-widest">{t('mission.silence')}</div>
             <div className="text-goldBright mt-4">{submitted} / {team.length}</div>
           </div>
         )}
@@ -188,10 +190,10 @@ export default function Mission({ room, me, secret }) {
         <>
           {!isOnlineMode && (isHost ? (
             <button className="btn-primary w-full mt-4" disabled={advancing} onClick={continueNext}>
-              {advancing ? '推进中…' : '· 继续 ·'}
+              {advancing ? t('common.advancing') : t('common.continue')}
             </button>
           ) : (
-            <div className="text-center text-[11px] text-inkMuted tracking-widest mt-4">等待房主继续…</div>
+            <div className="text-center text-[11px] text-inkMuted tracking-widest mt-4">{t('common.waitHostContinue')}</div>
           ))}
           {advanceError && <div className="text-center text-sm text-evilRed mt-3">{advanceError}</div>}
         </>

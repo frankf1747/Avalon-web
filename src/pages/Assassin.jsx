@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react'
 import { ROLES } from '../constants/roles'
 import { submitAssassin } from '../utils/roomApi'
 import { Shell, Flourish } from '../components/ui/Layout'
+import { useT } from '../i18n'
 
 export default function Assassin({ room, me, secret }) {
+  const t = useT()
   const isAssassin = secret?.role === 'assassin'
   const manualAssassination = (room.quests || []).filter(q => q?.result === 'success').length < 3
   const players = useMemo(
@@ -17,29 +19,29 @@ export default function Assassin({ room, me, secret }) {
   const [pick, setPick] = useState(null)
 
   return (
-    <Shell title="刺客之刃">
+    <Shell title={t('assassin.title')}>
       <Flourish />
       <div className="flex-1 flex flex-col items-center justify-center gap-5">
         <div className="text-6xl animate-flicker">🗡</div>
         <div className="font-display text-xl text-goldBright tracking-[0.3em] text-center">
           {manualAssassination ? (
             <>
-              刺客提前亮刃
+              {t('assassin.early1')}
               <br />
-              决定现在就刺杀梅林
+              {t('assassin.early2')}
             </>
           ) : (
             <>
-              好人已赢得三局任务
+              {t('assassin.late1')}
               <br />
-              刺客之刃悬于梅林之颈
+              {t('assassin.late2')}
             </>
           )}
         </div>
 
         {isAssassin ? (
           <>
-            <div className="text-xs text-inkMuted tracking-widest">选择你认为是梅林的玩家</div>
+            <div className="text-xs text-inkMuted tracking-widest">{t('assassin.choose')}</div>
             <div className="w-full flex flex-col gap-2">
               {goodCandidates.map(p => (
                 <button key={p.uid}
@@ -51,11 +53,11 @@ export default function Assassin({ room, me, secret }) {
               ))}
             </div>
             <button className="btn-primary w-full" disabled={!pick} onClick={() => submitAssassin(room.id, pick)}>
-              · 一刀封喉 ·
+              {t('assassin.strike')}
             </button>
           </>
         ) : (
-          <div className="text-inkMuted text-xs tracking-[0.3em]">等待刺客抉择…</div>
+          <div className="text-inkMuted text-xs tracking-[0.3em]">{t('assassin.waiting')}</div>
         )}
       </div>
     </Shell>

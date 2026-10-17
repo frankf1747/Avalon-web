@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Avalon — Demo Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Noto+Serif+SC:wght@500&display=block" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --night: #07060f;
+    --ink: #f0e2b5;
+    --muted: #9a8c66;
+    --gold: #c9a84c;
+    --gold-bright: #f5d97a;
+    --red: #b83020;
+    --green: #5ba06a;
+  }
+  html, body { width: 210mm; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #05040b; }
+  .sheet { width: 210mm; height: 297mm; page-break-after: always; break-after: page; overflow: hidden; position: relative;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    font-family: "EB Garamond", "Noto Serif SC", serif;
+    color: var(--ink);
+    background:
+      radial-gradient(ellipse 70% 38% at 50% 47%, rgba(245,217,122,0.20), transparent 70%),
+      radial-gradient(ellipse 90% 40% at 50% 0%, rgba(201,168,76,0.16), transparent 60%),
+      radial-gradient(ellipse 80% 35% at 50% 100%, rgba(120,40,20,0.30), transparent 65%),
+      linear-gradient(180deg, #16132a 0%, #0b0917 55%, #05040b 100%);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Fine gold frame */
+  .frame { position: absolute; inset: 9mm; border: 0.35mm solid rgba(201,168,76,0.55); }
+  .frame::after { content: ""; position: absolute; inset: 1.6mm; border: 0.2mm solid rgba(201,168,76,0.25); }
+  .corner { position: absolute; width: 7mm; height: 7mm; color: var(--gold); font-size: 5mm; line-height: 7mm; text-align: center;
+    background: #0b0917; }
+  .corner.tl { top: -3.5mm; left: -3.5mm; } .corner.tr { top: -3.5mm; right: -3.5mm; }
+  .corner.bl { bottom: -3.5mm; left: -3.5mm; } .corner.br { bottom: -3.5mm; right: -3.5mm; }
+
+  /* Faint star dust */
+  .dust { position: absolute; inset: 0; opacity: .55;
+    background-image:
+      radial-gradient(0.5px 0.5px at 12% 18%, #f5d97a, transparent),
+      radial-gradient(0.6px 0.6px at 84% 12%, #f5d97a, transparent),
+      radial-gradient(0.5px 0.5px at 72% 31%, #fff, transparent),
+      radial-gradient(0.7px 0.7px at 22% 36%, #f5d97a, transparent),
+      radial-gradient(0.5px 0.5px at 91% 44%, #fff, transparent),
+      radial-gradient(0.6px 0.6px at 7% 58%, #f5d97a, transparent),
+      radial-gradient(0.5px 0.5px at 40% 9%, #fff, transparent),
+      radial-gradient(0.6px 0.6px at 63% 7%, #f5d97a, transparent),
+      radial-gradient(0.5px 0.5px at 30% 24%, #fff, transparent),
+      radial-gradient(0.6px 0.6px at 55% 21%, #f5d97a, transparent); }
+
+  .page { position: relative; height: 100%; padding: 22mm 18mm 18mm; display: flex; flex-direction: column; align-items: center; }
+
+  .eyebrow { font-family: Cinzel, serif; font-size: 3.1mm; letter-spacing: .55em; color: var(--gold); padding-left: .55em; }
+
+  h1 { margin-top: 7mm; font-family: "Cinzel Decorative", Cinzel, serif; font-weight: 700; font-size: 31mm; line-height: 1;
+    letter-spacing: .08em; padding-left: .08em;
+    background: linear-gradient(180deg, #fff3c4 0%, #f5d97a 38%, #c9a84c 72%, #8a6b23 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 6mm rgba(245,217,122,.28)); }
+  .zh { margin-top: 3mm; font-family: "Noto Serif SC", serif; font-weight: 500; font-size: 5.2mm; letter-spacing: 1.1em; padding-left: 1.1em; color: rgba(240,226,181,.75); }
+
+  .flourish { margin-top: 6mm; display: flex; align-items: center; gap: 3mm; width: 92mm; color: var(--gold); font-size: 3.6mm; }
+  .flourish i { flex: 1; height: 0.25mm; background: linear-gradient(90deg, transparent, rgba(201,168,76,.8)); }
+  .flourish i:last-child { background: linear-gradient(270deg, transparent, rgba(201,168,76,.8)); }
+
+  .tagline { margin-top: 5mm; font-style: italic; font-size: 5.4mm; color: rgba(240,226,181,.88); letter-spacing: .02em; }
+
+  /* Fanned hand of role cards */
+  .hand { position: relative; width: 174mm; height: 86mm; margin-top: 10mm; }
+  .card { position: absolute; bottom: 0; left: 50%; width: 40mm; transform-origin: 50% 100%;
+    border-radius: 2.2mm; box-shadow: 0 3mm 7mm rgba(0,0,0,.65), 0 0 0 0.25mm rgba(201,168,76,.35); }
+  .card img { display: block; width: 100%; border-radius: 2.2mm; }
+  .c1 { transform: translateX(calc(-50% - 57mm)) translateY(-1mm) rotate(-13deg); z-index: 1; }
+  .c2 { transform: translateX(calc(-50% - 29mm)) translateY(-5mm) rotate(-6deg); z-index: 2; }
+  .c3 { transform: translateX(-50%) translateY(-8mm) scale(1.13); z-index: 5;
+    box-shadow: 0 3mm 9mm rgba(0,0,0,.7), 0 0 9mm rgba(245,217,122,.45), 0 0 0 0.3mm rgba(245,217,122,.7); }
+  .c4 { transform: translateX(calc(-50% + 29mm)) translateY(-5mm) rotate(6deg); z-index: 2; }
+  .c5 { transform: translateX(calc(-50% + 57mm)) translateY(-1mm) rotate(13deg); z-index: 1; }
+
+  .sides { margin-top: 13mm; display: flex; align-items: center; gap: 7mm; font-family: Cinzel, serif; font-size: 3.4mm; letter-spacing: .3em; }
+  .sides .good { color: var(--green); } .sides .evil { color: var(--red); }
+  .sides .vs { color: var(--muted); font-size: 2.8mm; letter-spacing: .2em; }
+
+  .blurb { margin-top: 5mm; width: 142mm; text-align: center; font-size: 4.25mm; line-height: 1.55; color: rgba(240,226,181,.82); }
+
+  .features { margin-top: 9mm; width: 168mm; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 0.25mm solid rgba(201,168,76,.4); border-bottom: 0.25mm solid rgba(201,168,76,.4); }
+  .feature { padding: 4.5mm 3mm; text-align: center; }
+  .feature + .feature { border-left: 0.25mm solid rgba(201,168,76,.22); }
+  .feature b { display: block; font-family: Cinzel, serif; font-weight: 600; font-size: 3.15mm; letter-spacing: .14em; color: var(--gold-bright); }
+  .feature span { display: block; margin-top: 1.6mm; font-size: 3.35mm; line-height: 1.35; color: var(--muted); }
+
+  .quests { margin-top: auto; display: flex; align-items: center; gap: 3.2mm; }
+  .q { width: 9mm; height: 9mm; border-radius: 50%; overflow: hidden; border: 0.3mm solid rgba(201,168,76,.4); display: grid; place-items: center;
+    font-family: Cinzel, serif; font-size: 3.2mm; color: var(--muted); background: rgba(0,0,0,.25); }
+  .q img { width: 100%; height: 100%; object-fit: cover; }
+  .q.ok { border-color: rgba(91,160,106,.8); } .q.bad { border-color: rgba(184,48,32,.8); }
+  .q.now { border-color: var(--gold-bright); color: var(--gold-bright); box-shadow: 0 0 3mm rgba(245,217,122,.5); }
+
+  .footer { margin-top: 6mm; display: flex; width: 168mm; justify-content: space-between; font-family: Cinzel, serif; font-size: 2.7mm; letter-spacing: .28em; color: rgba(154,140,102,.9); }
+
+  /* ---------- Gameplay pages ---------- */
+  .sheet.inner { background:
+      radial-gradient(ellipse 80% 30% at 50% 0%, rgba(201,168,76,0.14), transparent 65%),
+      radial-gradient(ellipse 80% 30% at 50% 100%, rgba(120,40,20,0.22), transparent 65%),
+      linear-gradient(180deg, #14112a 0%, #0b0917 50%, #06050d 100%); }
+  .inner .page { padding: 20mm 17mm 16mm; }
+  .kicker { font-family: Cinzel, serif; font-size: 2.9mm; letter-spacing: .5em; color: var(--gold); padding-left: .5em; }
+  h2 { margin-top: 3mm; font-family: Cinzel, serif; font-weight: 600; font-size: 10mm; letter-spacing: .12em; padding-left: .12em;
+    color: var(--gold-bright); text-shadow: 0 0 5mm rgba(245,217,122,.25); }
+  .lede { margin-top: 3mm; width: 150mm; text-align: center; font-size: 4mm; line-height: 1.5; color: rgba(240,226,181,.8); }
+
+  .phone { position: relative; border-radius: 5.2mm; padding: 1.3mm; background: linear-gradient(160deg, #3b3524, #121018 45%, #2a2418);
+    box-shadow: 0 2.5mm 6mm rgba(0,0,0,.6), 0 0 0 0.25mm rgba(201,168,76,.45); }
+  .phone img { display: block; width: 100%; border-radius: 4mm; }
+  .phone::before { content: ""; position: absolute; top: 2.6mm; left: 50%; transform: translateX(-50%); width: 9mm; height: 1.9mm;
+    border-radius: 1mm; background: #05040b; z-index: 2; }
+
+  .flow { margin-top: 8mm; display: grid; grid-template-columns: repeat(4, 37mm); column-gap: 7mm; row-gap: 7mm; }
+  .step .phone { width: 37mm; }
+  .step .num { margin-top: 3mm; font-family: Cinzel, serif; font-size: 2.6mm; letter-spacing: .3em; color: var(--gold); }
+  .step h3 { margin-top: 0.8mm; font-family: Cinzel, serif; font-weight: 600; font-size: 3.4mm; letter-spacing: .08em; color: var(--gold-bright); }
+  .step p { margin-top: 1mm; font-size: 3.15mm; line-height: 1.32; color: var(--muted); }
+
+  .tablet { width: 158mm; border-radius: 6mm; padding: 3.2mm; background: linear-gradient(160deg, #3b3524, #121018 45%, #2a2418);
+    box-shadow: 0 3mm 8mm rgba(0,0,0,.6), 0 0 0 0.3mm rgba(201,168,76,.45); }
+  .tablet img { display: block; width: 100%; border-radius: 3mm; }
+  .callouts { margin-top: 4.5mm; width: 158mm; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; }
+  .callouts div { border-top: 0.25mm solid rgba(201,168,76,.45); padding-top: 2.5mm; }
+  .callouts b { display: block; font-family: Cinzel, serif; font-weight: 600; font-size: 3.1mm; letter-spacing: .1em; color: var(--gold-bright); }
+  .callouts span { display: block; margin-top: 1mm; font-size: 3.2mm; line-height: 1.35; color: var(--muted); }
+
+  .lang { margin-top: 6mm; width: 158mm; display: grid; grid-template-columns: 29mm 29mm 1fr; gap: 6mm; align-items: center; }
+  .lang .phone { width: 29mm; }
+  .lang .tag { margin-top: 2mm; text-align: center; font-family: Cinzel, serif; font-size: 2.6mm; letter-spacing: .3em; color: var(--gold); }
+  .lang h3 { font-family: Cinzel, serif; font-weight: 600; font-size: 5mm; letter-spacing: .1em; color: var(--gold-bright); }
+  .lang p { margin-top: 2.5mm; font-size: 3.7mm; line-height: 1.5; color: rgba(240,226,181,.8); }
+  .lang ul { margin-top: 3mm; list-style: none; font-size: 3.4mm; line-height: 1.7; color: var(--muted); }
+  .lang li::before { content: "⚜"; color: var(--gold); margin-right: 2mm; font-size: 2.6mm; }
+
+  .pgnum { margin-top: auto; font-family: Cinzel, serif; font-size: 2.6mm; letter-spacing: .3em; color: rgba(154,140,102,.8); }
+</style>
+</head>
+<body>
+<section class="sheet cover">
+  <div class="dust"></div>
+  <div class="frame">
+    <span class="corner tl">⚜</span><span class="corner tr">⚜</span>
+    <span class="corner bl">⚜</span><span class="corner br">⚜</span>
+  </div>
+
+  <main class="page">
+    <div class="eyebrow">A Game of Hidden Loyalty · 5–10 Players</div>
+    <h1>AVALON</h1>
+    <div class="zh">阿瓦隆</div>
+    <div class="flourish"><i></i>⚜<i></i></div>
+    <p class="tagline">Beneath the Round Table, truth flickers in the firelight.</p>
+
+    <div class="hand">
+      <div class="card c1"><img src="art/mordred.png" alt="Mordred"></div>
+      <div class="card c2"><img src="art/percival.png" alt="Percival"></div>
+      <div class="card c5"><img src="art/assassin.png" alt="Assassin"></div>
+      <div class="card c4"><img src="art/morgana.png" alt="Morgana"></div>
+      <div class="card c3"><img src="art/merlin.png" alt="Merlin"></div>
+    </div>
+
+    <div class="sides">
+      <span class="good">Loyal Servants of Arthur</span>
+      <span class="vs">against</span>
+      <span class="evil">Minions of Mordred</span>
+    </div>
+
+    <p class="blurb">
+      Every phone becomes a secret role card. A narrator guides the night, knights argue at the round table,
+      and sealed votes decide five quests. Good must win three. Evil only needs to hide, or to find Merlin.
+    </p>
+
+    <section class="features">
+      <div class="feature"><b>Secret Roles</b><span>Merlin, Percival, Morgana, Mordred, Oberon &amp; the Assassin</span></div>
+      <div class="feature"><b>Voiced Night</b><span>Step-by-step narration with timed reveals</span></div>
+      <div class="feature"><b>Narrator View</b><span>iPad dashboard for the table: quests, votes, log</span></div>
+      <div class="feature"><b>English · 中文</b><span>Switch languages any time, mid-game included</span></div>
+    </section>
+
+    <div class="quests">
+      <div class="q ok"><img src="art/pass.png" alt="Quest succeeded"></div>
+      <div class="q bad"><img src="art/fail.png" alt="Quest failed"></div>
+      <div class="q ok"><img src="art/pass.png" alt="Quest succeeded"></div>
+      <div class="q now">4</div>
+      <div class="q">5</div>
+    </div>
+
+    <div class="footer">
+      <span>Real-time · Plays in the Browser</span>
+      <span>Frank Fu</span>
+    </div>
+  </main>
+</section>
+<section class="sheet inner"><div class="frame"><span class="corner tl">⚜</span><span class="corner tr">⚜</span><span class="corner bl">⚜</span><span class="corner br">⚜</span></div><main class="page">
+  <div class="kicker">Gameplay</div>
+  <h2>One Game, Phone by Phone</h2>
+  <p class="lede">Every player uses their own phone. Here is a seven-player game from Frank’s seat. He drew Merlin.</p>
+  <div class="flow"><div class="step"><div class="phone"><img src="shots/home.jpg" alt=""></div><div class="num">01</div><h3>Gather</h3><p>Start a room on one phone. Friends join with a six-letter code.</p></div><div class="step"><div class="phone"><img src="shots/lobby.jpg" alt=""></div><div class="num">02</div><h3>Set the Table</h3><p>The host picks roles. Suggested lineups for 5–10 players.</p></div><div class="step"><div class="phone"><img src="shots/reveal.jpg" alt=""></div><div class="num">03</div><h3>Draw a Role</h3><p>Each phone flips a private card: who you are, who you can see.</p></div><div class="step"><div class="phone"><img src="shots/night.jpg" alt=""></div><div class="num">04</div><h3>Night Falls</h3><p>The host phone narrates. Merlin sees evil, except Mordred.</p></div><div class="step"><div class="phone"><img src="shots/discuss.jpg" alt=""></div><div class="num">05</div><h3>Debate</h3><p>Speak in turn around the table while the leader drafts a team.</p></div><div class="step"><div class="phone"><img src="shots/vote.jpg" alt=""></div><div class="num">06</div><h3>Vote</h3><p>Everyone approves or rejects the team. Five rejections and evil wins.</p></div><div class="step"><div class="phone"><img src="shots/mission.jpg" alt=""></div><div class="num">07</div><h3>Quest</h3><p>Sealed cards. Here quest 4 needs two fails, and one saboteur isn’t enough.</p></div><div class="step"><div class="phone"><img src="shots/end.jpg" alt=""></div><div class="num">08</div><h3>Unmask</h3><p>The Assassin gets one guess at Merlin, then every role is revealed.</p></div></div>
+  <div class="pgnum">II</div>
+</main></section>
+<section class="sheet inner"><div class="frame"><span class="corner tl">⚜</span><span class="corner tr">⚜</span><span class="corner bl">⚜</span><span class="corner br">⚜</span></div><main class="page">
+  <div class="kicker">At the Table</div>
+  <h2>The Narrator’s View</h2>
+  <p class="lede">Prop an iPad in the middle of the table and everyone can follow the game. It shows no secrets and never votes.</p>
+  <div class="tablet" style="margin-top:6mm"><img src="shots/referee.jpg" alt="Narrator dashboard"></div>
+  <div class="callouts">
+    <div><b>Quest Tracker</b><span>Wins, losses, the current quest and the two-fail rule</span></div>
+    <div><b>Live Seating</b><span>Leader, speaker and proposed team around the round table</span></div>
+    <div><b>Event Log</b><span>Every vote and quest result, as it happens</span></div>
+  </div>
+  <div class="lang">
+    <div><div class="phone"><img src="shots/reveal.jpg" alt=""></div><div class="tag">EN</div></div>
+    <div><div class="phone"><img src="shots/reveal-zh.jpg" alt=""></div><div class="tag">中文</div></div>
+    <div>
+      <h3>English · 中文</h3>
+      <p>Every screen, role card, narration line and log entry is available in both languages.</p>
+      <ul><li>One tap switches language on any screen</li><li>Each phone keeps its own language</li><li>Night narration is spoken in the chosen language</li></ul>
+    </div>
+  </div>
+  <div class="pgnum">III</div>
+</main></section>
+</body>
+</html>

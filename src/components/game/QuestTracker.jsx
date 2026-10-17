@@ -1,7 +1,9 @@
 import { QUEST_PLAYER_COUNT, failsRequired } from '../../constants/questConfig'
 import { QuestBadge } from './QuestBadge'
+import { useT } from '../../i18n'
 
 export function QuestTracker({ room }) {
+  const t = useT()
   const playerCount = Object.keys(room.players).length
   const sizes = QUEST_PLAYER_COUNT[playerCount] || QUEST_PLAYER_COUNT[5]
   const current = room.game.currentQuest
@@ -16,7 +18,7 @@ export function QuestTracker({ room }) {
           <div key={i} className="flex flex-col items-center gap-1">
             <QuestBadge state={state} label={n} />
             <div className={`text-[10px] tracking-widest ${color}`}>
-              {failsRequired(playerCount, i) === 2 ? '双失败' : ''}
+              {failsRequired(playerCount, i) === 2 ? t('quest.doubleFail') : ''}
             </div>
           </div>
         )

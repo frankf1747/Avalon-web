@@ -4,16 +4,20 @@ import { ROLES } from '../constants/roles'
 import { setPlayerReady, advanceToNight } from '../utils/roomApi'
 import { Shell, Flourish } from '../components/ui/Layout'
 import AlphaFitImage from '../components/game/AlphaFitImage'
+import { useT } from '../i18n'
 
 export default function RoleReveal({ room, me, secret }) {
+  const t = useT()
   const [flipped, setFlipped] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const isHost = me?.uid === room.hostUid
   const allReady = Object.values(room.players).every(p => p.isReady)
 
-  if (!secret) return <Shell><div className="flex-1 flex items-center justify-center text-inkMuted tracking-widest">正在发牌……</div></Shell>
+  if (!secret) return <Shell><div className="flex-1 flex items-center justify-center text-inkMuted tracking-widest">{t('reveal.dealing')}</div></Shell>
 
   const role = ROLES[secret.role]
+  const roleName = t(`role.${secret.role}`)
+  const seeKey = secret.role === 'merlin' || secret.role === 'percival' ? `see.${secret.role}` : 'see.evil'
   const visiblePlayers = secret.visibleUids.map(uid => room.players[uid]).filter(Boolean)
 
   async function handleConfirm() {
@@ -22,7 +26,7 @@ export default function RoleReveal({ room, me, secret }) {
   }
 
   return (
-    <Shell title="身份揭示">
+    <Shell title={t('reveal.title')}>
       <div className="flex-1 flex flex-col items-center justify-center gap-5">
         <div className="[perspective:1200px]">
           <motion.div
@@ -36,9 +40,9 @@ export default function RoleReveal({ room, me, secret }) {
               <div className="flex h-full w-full flex-col items-center justify-center px-8 text-center">
                 <div className="text-6xl text-goldBright drop-shadow-[0_0_20px_rgba(245,217,122,0.5)]">⚜</div>
                 <div className="mt-6 flex w-full justify-center">
-                  <div className="pl-[0.5em] text-goldBright font-display text-2xl tracking-[0.5em]">阿瓦隆</div>
+                  <div className="pl-[0.5em] text-goldBright font-display text-2xl tracking-[0.5em]">{t('app.name')}</div>
                 </div>
-                <div className="text-gold/70 text-[10px] tracking-[0.6em] mt-2">A V A L O N</div>
+                <div className="text-gold/70 text-[10px] tracking-[0.6em] mt-2">{t('app.altName')}</div>
                 <Flourish className="mt-6 w-40 mx-auto" />
               </div>
             </div>
@@ -50,7 +54,7 @@ export default function RoleReveal({ room, me, secret }) {
                 <div className="absolute inset-x-[6%] top-[4%] bottom-[2%] overflow-hidden">
                   <AlphaFitImage
                     src={role.image}
-                    alt={role.name}
+                    alt={roleName}
                     className="h-full w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]"
                   />
                 </div>
@@ -58,15 +62,15 @@ export default function RoleReveal({ room, me, secret }) {
               </div>
               <div className="p-4 border-t border-gold/30 bg-black/25 backdrop-blur-[1px]">
                 <div className="flex items-center gap-2">
-                  <div className="text-goldBright font-display text-2xl tracking-[0.3em]">{role.name}</div>
+                  <div className="text-goldBright font-display text-2xl tracking-[0.3em]">{roleName}</div>
                   <span className={`chip ${role.side === 'evil' ? 'border-evilRed text-evilRed' : 'border-goodGreen text-goodGreen'}`}>
-                    {role.side === 'evil' ? '邪恶' : '正义'}
+                    {role.side === 'evil' ? t('side.evil') : t('side.good')}
                   </span>
                 </div>
-                <div className="text-[12px] text-ink/90 leading-relaxed mt-2">{role.description}</div>
+                <div className="text-[12px] text-ink/90 leading-relaxed mt-2">{t(`role.${secret.role}.desc`)}</div>
                 {secret.youCanSee && (
                   <div className="mt-2 text-[11px] text-goldBright/90">
-                    你能看到：<span className="text-ink">{secret.youCanSee}</span>
+                    {t('reveal.youCanSee')}<span className="text-ink">{t(seeKey)}</span>
                   </div>
                 )}
                 {visiblePlayers.length > 0 && (
@@ -84,21 +88,21 @@ export default function RoleReveal({ room, me, secret }) {
         {!confirmed ? (
           <div className="flex gap-3">
             {!flipped ? (
-              <button className="btn-primary" onClick={() => setFlipped(true)}>· 查看身份 ·</button>
+              <button className="btn-primary" onClick={() => setFlipped(true)}>{t('reveal.view')}</button>
             ) : (
-              <button className="btn-primary" onClick={handleConfirm}>✓ 我已记住，确认</button>
+              <button className="btn-primary" onClick={handleConfirm}>{t('reveal.confirm')}</button>
             )}
           </div>
         ) : (
           <div className="text-inkMuted text-xs tracking-[0.3em]">
-            等待其他玩家… ({Object.values(room.players).filter(p => p.isReady).length}/{Object.keys(room.players).length})
+            {t('reveal.waiting', { r: Object.values(room.players).filter(p => p.isReady).length, n: Object.keys(room.players).length })}
           </div>
         )}
       </div>
 
       {isHost && allReady && (
         <button className="btn-primary w-full mt-4" onClick={() => advanceToNight(room.id)}>
-          · 进入黑夜 ·
+          {t('reveal.toNight')}
         </button>
       )}
     </Shell>

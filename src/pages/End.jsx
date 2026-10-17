@@ -3,32 +3,34 @@ import { ROLES } from '../constants/roles'
 import { resetToLobby, leaveRoom, setEndRevealOpen } from '../utils/roomApi'
 import { Shell, Flourish } from '../components/ui/Layout'
 import { QuestBadge } from '../components/game/QuestBadge'
+import { useT } from '../i18n'
 
 export default function End({ room, me, onLeave }) {
+  const t = useT()
   const isHost = me?.uid === room.hostUid
   const winner = room.game.winner
   const players = useMemo(
     () => Object.entries(room.players).map(([uid, p]) => ({ uid, ...p })).sort((a, b) => a.order - b.order),
     [room.players]
   )
-  const title = winner === 'good' ? '正义胜利' : '邪恶胜利'
+  const title = winner === 'good' ? t('end.goodWins') : t('end.evilWins')
   const color = winner === 'good' ? 'text-goodGreen' : 'text-evilRed'
   const revealOpen = !!room.game.endRevealOpen
 
   async function handleLeave() { await leaveRoom(room.id); onLeave() }
 
   return (
-    <Shell title="终局" back={handleLeave}>
+    <Shell title={t('end.title')} back={handleLeave}>
       <div className="text-center my-6">
         <div className={`font-display text-4xl tracking-[0.4em] ${color}`}>{title}</div>
       </div>
       <Flourish />
 
       <div className="mt-5 mb-2 flex items-center justify-between gap-3">
-        <div className="text-xs tracking-[0.3em] text-gold/80">身份揭示</div>
+        <div className="text-xs tracking-[0.3em] text-gold/80">{t('end.reveal')}</div>
         {isHost && !revealOpen && (
           <button className="btn-ghost !px-4 !py-2" onClick={() => setEndRevealOpen(room.id, true)}>
-            · 揭示身份 ·
+            {t('end.revealBtn')}
           </button>
         )}
       </div>
@@ -44,7 +46,7 @@ export default function End({ room, me, onLeave }) {
                   <div className="text-sm truncate">{p.name}</div>
                   {role && (
                     <div className={`text-[11px] ${role.side === 'evil' ? 'text-evilRed' : 'text-goodGreen'}`}>
-                      {role.name}
+                      {t(`role.${rid}`)}
                     </div>
                   )}
                 </div>
@@ -54,11 +56,11 @@ export default function End({ room, me, onLeave }) {
         </div>
       ) : (
         <div className="card-themed !p-4 text-center text-sm text-inkMuted">
-          {isHost ? '点击“揭示身份”后，全员将看到本局角色名单。' : '等待房主揭示本局身份名单…'}
+          {isHost ? t('end.hostHint') : t('end.waitReveal')}
         </div>
       )}
 
-      <div className="mt-6 text-xs tracking-[0.3em] text-gold/80">任务回顾</div>
+      <div className="mt-6 text-xs tracking-[0.3em] text-gold/80">{t('end.review')}</div>
       <div className="flex gap-2 mt-2 items-center justify-center">
         {room.quests.map((q, i) => (
           <div key={i} className="flex flex-col items-center gap-1 flex-1">
@@ -68,7 +70,7 @@ export default function End({ room, me, onLeave }) {
       </div>
 
       {isHost && (
-        <button className="btn-primary w-full mt-8" onClick={() => resetToLobby(room.id)}>· 再来一局 ·</button>
+        <button className="btn-primary w-full mt-8" onClick={() => resetToLobby(room.id)}>{t('end.again')}</button>
       )}
     </Shell>
   )

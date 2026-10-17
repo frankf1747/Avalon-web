@@ -1,10 +1,13 @@
+import { useT } from '../../i18n'
+
 export function Shell({ children, title, back }) {
+  const t = useT()
   return (
     <div className="min-h-screen w-full max-w-md mx-auto px-5 pt-10 pb-10 flex flex-col relative">
       {(title || back) && (
         <header className="relative flex items-center justify-between mb-4 min-h-[28px]">
           <div className="relative z-10 text-gold text-sm tracking-[0.3em]">
-            {back && <button onClick={back}>‹ 返回</button>}
+            {back && <button onClick={back}>{t('common.back')}</button>}
           </div>
           <div className="absolute inset-x-0 flex justify-center pointer-events-none">
             <div className="text-goldBright font-display text-lg tracking-[0.4em] text-center">{title}</div>
